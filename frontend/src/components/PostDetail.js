@@ -6,14 +6,52 @@ const PostDetail = () => {
   const { id } = useParams(); // URL에서 id 파라미터를 가져오기.
   const [post, setPost] = useState(null); // 게시글 상태를 관리하는 상태 변수를 초기화.
 
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  
   useEffect(() => {
-    // 서버에서 특정 ID의 게시글을 가져옵니다.
-    axios.get(`http://localhost:3001/posts/${id}`)
+    const fetchPost = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3001/posts/${id}`);
+        setPost(response.data);
+      } catch (error) {
+        console.error('Error fetching post:', error);
+      }
+    };
 
-      .then(response => setPost(response.data)) // 성공 시 게시글 데이터를 상태에 저장.
-      .catch(error => console.error('Error fetching post:', error)); // 실패 시 에러를 콘솔에 출력.
-  }, [id]); // id가 변경될 때마다 이 효과 훅이 실행
+    const fetchComments = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3001/posts/${id}/comments`);
+        setComments(response.data);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+      }
+    };
 
+    fetchPost();
+    fetchComments();
+  }, [id]);
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post(`http://localhost:3001/posts/${id}/comments`, { content: newComment });
+      if (response.status === 201) {
+        setComments([...comments, response.data]);
+        setNewComment('');
+
+      } else {
+        alert('Failed to add comment');
+      }
+    } catch (error) {
+      alert('Failed to add comment: ' + (error.response?.data?.message || error.message));
+    }
+  };
+  
+
+
+  
   // 게시글이 아직 로드되지 않은 경우 로딩 메시지를 표시.
   if (!post) return <div>Loading...</div>;
 
@@ -21,6 +59,22 @@ const PostDetail = () => {
     <div>
       <h2>{post.title}</h2>
       <p>{post.content}</p>
+      <hr />
+      <h3>Comments</h3>
+      <ul>
+        {comments.map(comment => (
+          <li key={comment.id}>{comment.content}</li>
+        ))}
+      </ul>
+      <form onSubmit={handleCommentSubmit}>
+        <textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Add a comment"
+          required
+        />
+        <button type="submit">Add Comment</button>
+      </form>
     </div>
   );
 };
