@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 
+// PostDetail 컴포넌트 정의
 const PostDetail = () => {
   const { id } = useParams(); // URL에서 id 파라미터를 가져오기.
   const [post, setPost] = useState(null); // 게시글 상태를 관리하는 상태 변수를 초기화.
@@ -14,7 +15,10 @@ const PostDetail = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
 
+   // 컴포넌트가 마운트될 때 게시물 및 댓글 데이터를 가져오는 함수
   useEffect(() => {
+
+    // 게시물 데이터를 가져오는 함수
     const fetchPost = async () => {
       try {
         const response = await axios.get(`http://localhost:3001/posts/${id}`);
@@ -28,6 +32,7 @@ const PostDetail = () => {
       }
     };
 
+    // 댓글 데이터를 가져오는 함수
     const fetchComments = async () => {
       try {
         const response = await axios.get(`http://localhost:3001/posts/${id}/comments`);
@@ -38,17 +43,17 @@ const PostDetail = () => {
       }
     };
 
-    fetchPost();
-    fetchComments();
-  }, [id]);
+    fetchPost(); // 게시물 데이터 가져오기
+    fetchComments(); // 댓글 데이터 가져오기
+  }, [id]); // id가 변경될 때마다 실행
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post(`http://localhost:3001/posts/${id}/comments`, { content: newComment });
       if (response.status === 201) {
-        setComments([...comments, response.data]);
-        setNewComment('');
+        setComments([...comments, response.data]); // 새로운 댓글 추가
+        setNewComment(''); // 입력 필드 초기화
       } else {
         alert('Failed to add comment');
       }
@@ -57,13 +62,14 @@ const PostDetail = () => {
     }
   };
   
+  // 게시물을 수정하는 함수
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.put(`http://localhost:3001/posts/${id}`, { title: editTitle, content: editContent });
       if (response.status === 200) {
-        setPost(response.data);
-        setIsEditing(false);
+        setPost(response.data); // 수정된 게시물 데이터 설정
+        setIsEditing(false); // 수정 모드 종료
       } else {
         alert('Failed to update post');
       }
@@ -72,12 +78,13 @@ const PostDetail = () => {
     }
   };
 
+  // 게시물을 삭제하는 함수
   const handleDeletePost  = async () => {
     try {
       const response = await axios.delete(`http://localhost:3001/posts/${id}`);
       
       if (response.status === 204) {
-        navigate('/');
+        navigate('/'); // 게시물 삭제 후 홈 페이지로 이동
       } else {
         alert('Failed to delete post');
       }

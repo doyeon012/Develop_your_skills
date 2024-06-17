@@ -17,7 +17,8 @@ const usersFile = path.join(__dirname, 'data', 'users.json');
 const postsFile = path.join(__dirname, 'data', 'posts.json');
 const commentsFile = path.join(__dirname, 'data', 'comments.json'); // comments.json 파일의 경로를 설정합니다.
 
-// 파일에서 데이터를 읽어오는 유틸리티 함수
+
+// 댓글 데이터를 읽고 쓰는 함수
 const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath)); // 파일을 읽고 JSON 형식으로 파싱합니다.
@@ -31,7 +32,6 @@ const readData = (filePath) => {
 const writeData = (filePath, data) => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 };
-
 
 
 // 인증 관련 라우트
@@ -66,13 +66,13 @@ app.post('/login', (req, res) => {
   });
   
 
-// 모든 게시글을 가져오는 라우트
+// 게시물 조회 (Read All)
 app.get('/posts', (req, res) => {
   const posts = readData(postsFile);
   res.status(200).json(posts);
 });
 
-// 새로운 게시글을 추가하는 라우트
+// 게시물 생성 (Create)
 app.post('/posts', (req, res) => {
   const posts = readData(postsFile); // 기존 게시글 데이터를 읽어옵니다.
   const newPost = { id: Date.now(), ...req.body }; // 새로운 게시글을 생성.
@@ -83,7 +83,7 @@ app.post('/posts', (req, res) => {
 });
 
 
-// 특정 ID의 게시글을 가져오는 라우트
+// 특정 게시물 조회 (Read One)
 app.get('/posts/:id', (req, res) => {
   const posts = readData(postsFile); // 기존 게시글 데이터를 읽기.
   const post = posts.find(p => p.id === parseInt(req.params.id));
@@ -92,6 +92,31 @@ app.get('/posts/:id', (req, res) => {
     res.status(200).json(post); // 게시글이 존재하면 반환.
   } else {
     res.status(404).json({ message: 'Post not found' }); // 게시글이 없으면 에러 메시지를 반환.
+  }
+});
+
+// 게시물 수정 (Update)
+app.put('/posts/:id', (req, res) => {
+  const posts = readData(postsFile);
+  const index = posts.findIndex(p => p.id === parseInt(req.params.id));
+  if (index !== -1) {
+    posts[index] = { ...posts[index], ...req.body };
+    writeData(postsFile, posts);
+    res.status(200).json(posts[index]);
+  } else {
+    res.status(404).json({ message: 'Post not found' });
+  }
+});
+
+// 게시물 삭제 (Delete)
+app.delete('/posts/:id', (req, res) => {
+  const posts = readData(postsFile);
+  const filteredPosts = posts.filter(p => p.id !== parseInt(req.params.id));
+  if (posts.length !== filteredPosts.length) {
+    writeData(postsFile, filteredPosts);
+    res.status(204).send();
+  } else {
+    res.status(404).json({ message: 'Post not found' });
   }
 });
 
@@ -119,33 +144,7 @@ app.get('/posts/:id/comments', (req, res) => {
 
 
 
-// 게시물 수정
-app.put('/posts/:id', (req, res) => {
-  const posts = readData(postsFile);
-  const index = posts.findIndex(p => p.id === parseInt(req.params.id));
-  if (index !== -1) {
-    posts[index] = { ...posts[index], ...req.body };
-    writeData(postsFile, posts);
-    res.status(200).json(posts[index]);
-  } else {
-    res.status(404).json({ message: 'Post not found' });
-  }
-});
-
-// 게시물 삭제
-app.delete('/posts/:id', (req, res) => {
-  const posts = readData(postsFile);
-  const filteredPosts = posts.filter(p => p.id !== parseInt(req.params.id));
-  if (posts.length !== filteredPosts.length) {
-    writeData(postsFile, filteredPosts);
-    res.status(204).send();
-  } else {
-    res.status(404).json({ message: 'Post not found' });
-  }
-});
-
-
-// 서버를 시작.
+// 서버 시작
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

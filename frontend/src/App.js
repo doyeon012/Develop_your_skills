@@ -8,7 +8,7 @@ import PostDetail from './components/PostDetail';
 import './App.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);  // 인증 상태를 관리하는 상태 변수
 
   return (
     <Router>
