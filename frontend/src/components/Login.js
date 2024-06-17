@@ -7,23 +7,27 @@ const Login = ({ setIsAuthenticated }) => {
   const [username, setUsername] = useState(''); // 사용자 이름 상태 변수
   const [password, setPassword] = useState(''); // 비밀번호 상태 변수
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // 폼 제출 기본 동작 방지
 
+    // 폼 제출 핸들러
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // 폼의 기본 제출 동작 방지
     try {
       const response = await axios.post('http://localhost:3001/login', { username, password });
-      
       if (response.status === 200) {
-        setIsAuthenticated(true); // 로그인 성공 시 인증 상태 변경
+        setIsAuthenticated(true); // 인증 상태 업데이트
+        localStorage.setItem('isAuthenticated', 'true'); // 로컬 스토리지에 인증 상태 저장
+        console.log('Login successful, setting isAuthenticated to true in localStorage'); // 로그 추가
+        alert(response.data.message); // 로그인 성공 메시지 표시
+      } else {
+        alert('Login failed'); // 로그인 실패 메시지 표시
       }
     } catch (error) {
-      alert('Login failed: ' + error.response.data.message); // 로그인 실패 시 경고 메시지
+      alert('Login failed: ' + (error.response?.data?.message || error.message));
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Login</h2>
       <input
         type="text"
         placeholder="Username"
