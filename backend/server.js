@@ -119,6 +119,32 @@ app.get('/posts/:id/comments', (req, res) => {
 
 
 
+// 게시물 수정
+app.put('/posts/:id', (req, res) => {
+  const posts = readData(postsFile);
+  const index = posts.findIndex(p => p.id === parseInt(req.params.id));
+  if (index !== -1) {
+    posts[index] = { ...posts[index], ...req.body };
+    writeData(postsFile, posts);
+    res.status(200).json(posts[index]);
+  } else {
+    res.status(404).json({ message: 'Post not found' });
+  }
+});
+
+// 게시물 삭제
+app.delete('/posts/:id', (req, res) => {
+  const posts = readData(postsFile);
+  const filteredPosts = posts.filter(p => p.id !== parseInt(req.params.id));
+  if (posts.length !== filteredPosts.length) {
+    writeData(postsFile, filteredPosts);
+    res.status(204).send();
+  } else {
+    res.status(404).json({ message: 'Post not found' });
+  }
+});
+
+
 // 서버를 시작.
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

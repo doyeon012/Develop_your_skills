@@ -1,19 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const PostDetail = () => {
   const { id } = useParams(); // URL에서 id 파라미터를 가져오기.
   const [post, setPost] = useState(null); // 게시글 상태를 관리하는 상태 변수를 초기화.
+  const navigate = useNavigate();
 
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
         const response = await axios.get(`http://localhost:3001/posts/${id}`);
         setPost(response.data);
+
+        setEditTitle(response.data.title);
+        setEditContent(response.data.content);
+
       } catch (error) {
         console.error('Error fetching post:', error);
       }
@@ -23,6 +32,7 @@ const PostDetail = () => {
       try {
         const response = await axios.get(`http://localhost:3001/posts/${id}/comments`);
         setComments(response.data);
+
       } catch (error) {
         console.error('Error fetching comments:', error);
       }
@@ -34,13 +44,11 @@ const PostDetail = () => {
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const response = await axios.post(`http://localhost:3001/posts/${id}/comments`, { content: newComment });
       if (response.status === 201) {
         setComments([...comments, response.data]);
         setNewComment('');
-
       } else {
         alert('Failed to add comment');
       }
@@ -49,6 +57,34 @@ const PostDetail = () => {
     }
   };
   
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(`http://localhost:3001/posts/${id}`, { title: editTitle, content: editContent });
+      if (response.status === 200) {
+        setPost(response.data);
+        setIsEditing(false);
+      } else {
+        alert('Failed to update post');
+      }
+    } catch (error) {
+      alert('Failed to update post: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleDeletePost  = async () => {
+    try {
+      const response = await axios.delete(`http://localhost:3001/posts/${id}`);
+      
+      if (response.status === 204) {
+        navigate('/');
+      } else {
+        alert('Failed to delete post');
+      }
+    } catch (error) {
+      alert('Failed to delete post: ' + (error.response?.data?.message || error.message));
+    }
+  };
 
 
   
@@ -57,8 +93,30 @@ const PostDetail = () => {
 
   return (
     <div>
-      <h2>{post.title}</h2>
-      <p>{post.content}</p>
+      {isEditing ? (
+        <form onSubmit={handleEditSubmit}>
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            required
+          />
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            required
+          />
+          <button type="submit">Update Post</button>
+          <button type="button" onClick={() => setIsEditing(false)}>Cancel</button>
+        </form>
+      ) : (
+        <>
+          <h2>{post.title}</h2>
+          <p>{post.content}</p>
+          <button onClick={() => setIsEditing(true)}>Edit</button>
+          <button onClick={handleDeletePost}>Delete</button>
+        </>
+      )}
       <hr />
       <h3>Comments</h3>
       <ul>
@@ -78,5 +136,6 @@ const PostDetail = () => {
     </div>
   );
 };
+
 
 export default PostDetail;
