@@ -12,12 +12,14 @@ const PostForm = ({ onPostCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+
+      // 게시물 생성 요청을 서버에 보냅니다.
       const response = await axios.post('http://localhost:3001/posts', { title, content, category });
       if (response.status === 201) {
-        alert('Post created successfully');
-        navigate('/');
+        alert('Post created successfully'); // 성공 메시지 표시
+        navigate('/'); // 홈 페이지로 이동
       } else {
-        alert('Failed to create post');
+        alert('Failed to create post'); // 실패 메시지 표시
       }
     } catch (error) {
       alert('Failed to create post: ' + (error.response?.data?.message || error.message));
