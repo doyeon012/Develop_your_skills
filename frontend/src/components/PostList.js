@@ -6,22 +6,39 @@ const PostList = () => {
   const [posts, setPosts] = useState([]); // 게시글 상태를 관리하는 상태 변수를 초기화.
 
    // 컴포넌트가 마운트될 때 실행되는 효과 훅입니다.
-  useEffect(() => {
+   useEffect(() => {
     axios.get('http://localhost:3001/posts')
-      .then(response => setPosts(response.data))
+      .then(response => {
+        console.log('Fetched Posts:', response.data);
+        setPosts(response.data);
+      })
       .catch(error => console.error('Error fetching posts:', error));
-  }, []); // 빈 배열을 의존성으로 설정하여 컴포넌트가 처음 마운트될 때만 실행되도록 함..
+  }, []);
+
+  // 카테고리별로 그룹화된 게시물을 생성
+  const groupedPosts = posts.reduce((acc, post) => {
+    if (!acc[post.category]) {
+      acc[post.category] = [];
+    }
+    acc[post.category].push(post);
+    return acc;
+  }, {});
 
   return (
     <div>
       <h2>Posts</h2>
-      <ul>
-        {posts.map(post => (
-          <li key={post.id}>
-            <Link to={`/posts/${post.id}`}>{post.title}</Link>
-          </li>
-        ))}
-      </ul>
+      {Object.keys(groupedPosts).map((category) => (
+        <div key={category}>
+          <h3>{category}</h3>
+          <ul>
+            {groupedPosts[category].map(post => (
+              <li key={post.id}>
+                <Link to={`/posts/${post.id}`}>{post.title}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 };

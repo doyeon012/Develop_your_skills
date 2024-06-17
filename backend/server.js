@@ -66,19 +66,27 @@ app.post('/login', (req, res) => {
   });
   
 
-// 게시물 조회 (Read All)
+// 모든 게시물 조회 (Read All) - 카테고리별로 그룹화
 app.get('/posts', (req, res) => {
-  const posts = readData(postsFile);
-  res.status(200).json(posts);
+  const posts = readPosts();
+  const groupedPosts = posts.reduce((acc, post) => {
+    if (!acc[post.category]) {
+      acc[post.category] = [];
+    }
+    acc[post.category].push(post);
+    return acc;
+  }, {});
+
+  res.status(200).json(groupedPosts);
 });
 
 // 게시물 생성 (Create)
 app.post('/posts', (req, res) => {
-  const posts = readData(postsFile); // 기존 게시글 데이터를 읽어옵니다.
+  const posts = readData(); // 기존 게시글 데이터를 읽어옵니다.
   const newPost = { id: Date.now(), ...req.body }; // 새로운 게시글을 생성.
   
   posts.push(newPost);  // 새로운 게시글을 배열에 추가.
-  writeData(postsFile, posts); // 게시글 데이터를 파일에 씁니다.
+  writeData(posts); // 게시글 데이터를 파일에 씁니다.
   res.status(201).json(newPost); // 새 게시글 데이터를 반환.
 });
 
