@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // useNavigate 훅을 import
 
 const Login = ({ setIsAuthenticated }) => {
 
    // 상태 변수 설정
   const [username, setUsername] = useState(''); // 사용자 이름 상태 변수
   const [password, setPassword] = useState(''); // 비밀번호 상태 변수
-
+  const navigate = useNavigate(); // useNavigate 훅 사용
 
     // 폼 제출 핸들러
   const handleSubmit = async (e) => {
+    
     e.preventDefault(); // 폼의 기본 제출 동작 방지
     try {
       const response = await axios.post('http://localhost:3001/login', { username, password });
@@ -18,6 +20,7 @@ const Login = ({ setIsAuthenticated }) => {
         localStorage.setItem('isAuthenticated', 'true'); // 로컬 스토리지에 인증 상태 저장
         console.log('Login successful, setting isAuthenticated to true in localStorage'); // 로그 추가
         alert(response.data.message); // 로그인 성공 메시지 표시
+        navigate('/'); // 로그인 성공 후 홈 화면으로 이동
       } else {
         alert('Login failed'); // 로그인 실패 메시지 표시
       }
