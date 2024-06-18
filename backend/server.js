@@ -20,7 +20,32 @@ const postsFile = path.join(__dirname, 'data', 'posts.json');
 const commentsFile = path.join(__dirname, 'data', 'comments.json'); // comments.json 파일의 경로를 설정합니다.
 
 // 업로드 디렉토리 설정 및 multer 미들웨어 설정
-const upload = multer({ dest: 'uploads/' }); // 파일 업로드를 위한 디렉토리 설정
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+  
+  if (extname && mimetype) {
+    return cb(null, true);
+  } else {
+    cb('Error: Images Only!');
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter
+}); // 파일 업로드를 위한 디렉토리 설정 및 파일 필터 추가
+
 
 // 댓글 데이터를 읽고 쓰는 함수
 const readData = (filePath) => {
@@ -72,9 +97,8 @@ app.post('/login', (req, res) => {
 
 // 모든 게시물 조회 (Read All) - 카테고리별로 그룹화
 app.get('/posts', (req, res) => {
-  const posts = readData(postsFile);
 
-  // 카테고리 필터링
+  const posts = readData(postsFile);
   const { sortBy, category } = req.query;
 
   // 카테고리 필터링
