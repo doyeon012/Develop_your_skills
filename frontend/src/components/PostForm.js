@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate  } from 'react-router-dom';
 
-const PostForm = ({ onPostCreated }) => {
+const PostForm = ( ) => {
   const [title, setTitle] = useState(''); // 제목 상태 변수를 초기화.
   const [content, setContent] = useState(''); // 내용 상태 변수를 초기화.
   const [category, setCategory] = useState('');
   const [file, setFile] = useState(null); // 파일 상태 변수를 추가.
   const navigate = useNavigate(); // useNavigate 훅 사용
+
 
   // 폼 제출 처리 함수
   const handleSubmit = async (e) => {
@@ -34,8 +35,12 @@ const PostForm = ({ onPostCreated }) => {
       
       if (response.status === 201) {
         alert('Post created successfully'); // 성공 메시지 표시
-        navigate('/'); // 홈 페이지로 이동
 
+        const sortBy = localStorage.getItem('sortBy') || 'latest';
+        const category = localStorage.getItem('category') || '';
+
+        navigate(`/?sortBy=${sortBy}&category=${category}`, { replace: true });
+        window.location.reload(); // 페이지를 새로고침하여 정렬 옵션과 필터를 유지
       } else {
         alert('Failed to create post'); // 실패 메시지 표시
       }

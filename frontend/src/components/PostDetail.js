@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate  } from 'react-router-dom';
 
 // PostDetail 컴포넌트 정의
 const PostDetail = () => {
@@ -104,6 +104,14 @@ const PostDetail = () => {
   // 게시글이 아직 로드되지 않은 경우 로딩 메시지를 표시.
   if (!post) return <div>Loading...</div>;
 
+  // 뒤로가기 버튼 핸들러
+  const handleBack = () => {
+    const sortBy = localStorage.getItem('sortBy') || 'latest';
+    const category = localStorage.getItem('category') || '';
+    navigate(`/?sortBy=${sortBy}&category=${category}`, { replace: true }); // 상태 전달
+    window.location.reload(); // 페이지를 새로고침하여 정렬 옵션과 필터를 유지
+  };
+
   return (
     <div>
       {isEditing ? (
@@ -156,8 +164,11 @@ const PostDetail = () => {
         />
 
         <button type="submit">Add Comment</button>
-        
+
       </form>
+
+      <button onClick={handleBack}>Back</button>
+
     </div>
   );
 };

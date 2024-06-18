@@ -1,30 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation  } from 'react-router-dom';
 import '../PostList.css'; // PostList 전용 CSS 파일을 추가하여 스타일링
 
 const PostList = () => {
   const [posts, setPosts] = useState([]); // 게시글 상태를 관리하는 상태 변수를 초기화.
   const [sortBy, setSortBy] = useState('latest'); // 정렬 옵션 상태를 관리하는 상태 변수 초기화.
   const [category, setCategory] = useState(''); // 카테고리 필터 상태를 관리하는 상태 변수 초기화.
+  const navigate = useNavigate(); // useNavigate 훅 사용
+  const location = useLocation();
+
 
 
    // 컴포넌트가 마운트될 때 실행되는 효과 훅입니다.
   useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const savedSortBy = queryParams.get('sortBy') || localStorage.getItem('sortBy') || 'latest';
+    const savedCategory = queryParams.get('category') || localStorage.getItem('category') || '';
+    
+    setSortBy(savedSortBy);
+    setCategory(savedCategory);
 
-    // localStorage에서 저장된 정렬 옵션을 불러옵니다.
-    const savedSortBy = localStorage.getItem('sortBy');
-
-    if (savedSortBy) {
-      setSortBy(savedSortBy);
-    }
-
-    // localStorage에서 저장된 카테고리 필터를 불러옵니다.
-    const savedCategory = localStorage.getItem('category');
-    if (savedCategory) {
-      setCategory(savedCategory);
-    }
-  }, []);
+    // 상태를 localStorage에 저장
+    localStorage.setItem('sortBy', savedSortBy);
+    localStorage.setItem('category', savedCategory);
+  }, [location.search]);
 
   useEffect(() => {
     fetchPosts();
@@ -40,7 +40,6 @@ const PostList = () => {
       },
     })
       .then(response => {
-        
         setPosts(response.data);
       })
       .catch(error => console.error('Error fetching posts:', error));
@@ -62,15 +61,24 @@ const PostList = () => {
 
     const newSortBy = e.target.value;
     setSortBy(newSortBy);
-
-    localStorage.setItem('sortBy', newSortBy); // localStorage에 정렬 옵션을 저장
+    updateURL(newSortBy, category);
   };
 
   // 카테고리 필터 변경 처리 함수
   const handleCategoryChange = (e) => {
     const newCategory = e.target.value;
     setCategory(newCategory);
-    localStorage.setItem('category', newCategory); // localStorage에 카테고리 필터를 저장
+    updateURL(sortBy, newCategory);
+  };
+
+
+  // URL 업데이트 함수
+  const updateURL = (sortBy, category) => {
+    navigate(`/?sortBy=${sortBy}&category=${category}`, { replace: true });
+
+    // 상태를 localStorage에 저장
+    localStorage.setItem('sortBy', sortBy);
+    localStorage.setItem('category', category);
   };
 
   // 카테고리별로 그룹화된 게시물을 생성
@@ -111,7 +119,7 @@ const PostList = () => {
             {groupedPosts[category].map(post => (
               <li key={post.id} className="post-item">
 
-                <Link to={`/posts/${post.id}`}>{post.title}</Link>
+                <Link to={`/posts/${post.id}`} state={{ sortBy, category }}>{post.title}</Link>
                 <p>by {post.username}</p>
                 {post.file && <img src={`http://localhost:3001/uploads/${post.file}`} alt={post.title} />}
                 <p>Likes: {post.likes}</p>
