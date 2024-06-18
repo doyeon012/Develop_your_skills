@@ -128,6 +128,23 @@ app.delete('/posts/:id', (req, res) => {
   }
 });
 
+// 게시물 좋아요 (Like)
+app.post('/posts/:id/like', (req, res) => {
+  const posts = readData(postsFile);
+  const index = posts.findIndex(p => p.id === parseInt(req.params.id));
+
+  if (index !== -1) {
+    posts[index].likes += 1; // 좋아요 수 증가
+
+    writeData(postsFile, posts); // 변경된 데이터를 posts.json.파일에 쓴다.
+    res.status(200).json(posts[index]);
+
+  } else {
+    res.status(404).json({ message: 'Post not found' });
+  }
+});
+
+
 // 댓글 관련
 // 댓글 생성 (Create)
 app.post('/posts/:id/comments', (req, res) => {
