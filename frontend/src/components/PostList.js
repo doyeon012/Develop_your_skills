@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import '../PostList.css'; // PostList 전용 CSS 파일을 추가하여 스타일링
 
 const PostList = () => {
   const [posts, setPosts] = useState([]); // 게시글 상태를 관리하는 상태 변수를 초기화.
@@ -35,17 +36,17 @@ const PostList = () => {
   }, {});
 
   return (
-    <div>
+    <div className="post-list" >
       <h2>Posts</h2>
       {Object.keys(groupedPosts).map((category) => (
-        <div key={category}>
+        <div key={category} className="category" >
           <h3>{category}</h3>
           <ul>
             {groupedPosts[category].map(post => (
-              <li key={post.id}>
+              <li key={post.id} className="post-item">
 
                 <Link to={`/posts/${post.id}`}>{post.title}</Link>
-                {post.file && <img src={`http://localhost:3001/uploads/${post.file}`} alt={post.title} style={{ maxWidth: '200px' }} />}
+                {post.file && <img src={`http://localhost:3001/uploads/${post.file}`} alt={post.title} />}
                 <p>Likes: {post.likes}</p>
 
                 <button onClick={() => handleLike(post.id)}>Like</button>
