@@ -13,14 +13,21 @@ const Login = ({ setIsAuthenticated }) => {
   const handleSubmit = async (e) => {
     
     e.preventDefault(); // 폼의 기본 제출 동작 방지
+
     try {
       const response = await axios.post('http://localhost:3001/login', { username, password });
+      
       if (response.status === 200) {
+
         setIsAuthenticated(true); // 인증 상태 업데이트
+
+        const displayName = username.split('@')[0]; // '@' 전까지의 부분만 저장
         localStorage.setItem('isAuthenticated', 'true'); // 로컬 스토리지에 인증 상태 저장
-        console.log('Login successful, setting isAuthenticated to true in localStorage'); // 로그 추가
+        localStorage.setItem('username', displayName); // 사용자 이름을 로컬 스토리지에 저장
+
         alert(response.data.message); // 로그인 성공 메시지 표시
         navigate('/'); // 로그인 성공 후 홈 화면으로 이동
+
       } else {
         alert('Login failed'); // 로그인 실패 메시지 표시
       }

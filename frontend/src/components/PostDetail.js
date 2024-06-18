@@ -51,12 +51,16 @@ const PostDetail = () => {
     e.preventDefault();
     try {
       const response = await axios.post(`http://localhost:3001/posts/${id}/comments`, { content: newComment });
+      
       if (response.status === 201) {
+
         setComments([...comments, response.data]); // 새로운 댓글 추가
         setNewComment(''); // 입력 필드 초기화
+
       } else {
         alert('Failed to add comment');
       }
+
     } catch (error) {
       alert('Failed to add comment: ' + (error.response?.data?.message || error.message));
     }
@@ -64,12 +68,15 @@ const PostDetail = () => {
   
   // 게시물을 수정하는 함수
   const handleEditSubmit = async (e) => {
+
     e.preventDefault();
     try {
       const response = await axios.put(`http://localhost:3001/posts/${id}`, { title: editTitle, content: editContent });
+      
       if (response.status === 200) {
         setPost(response.data); // 수정된 게시물 데이터 설정
         setIsEditing(false); // 수정 모드 종료
+
       } else {
         alert('Failed to update post');
       }
@@ -80,6 +87,7 @@ const PostDetail = () => {
 
   // 게시물을 삭제하는 함수
   const handleDeletePost  = async () => {
+
     try {
       const response = await axios.delete(`http://localhost:3001/posts/${id}`);
       
@@ -93,8 +101,6 @@ const PostDetail = () => {
     }
   };
 
-
-  
   // 게시글이 아직 로드되지 않은 경우 로딩 메시지를 표시.
   if (!post) return <div>Loading...</div>;
 
@@ -102,43 +108,55 @@ const PostDetail = () => {
     <div>
       {isEditing ? (
         <form onSubmit={handleEditSubmit}>
+          
           <input
             type="text"
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             required
           />
+
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             required
           />
+
           <button type="submit">Update Post</button>
           <button type="button" onClick={() => setIsEditing(false)}>Cancel</button>
+
         </form>
       ) : (
         <>
           <h2>{post.title}</h2>
           <p>{post.content}</p>
+
+          <p>by {post.username}</p>
+
           <button onClick={() => setIsEditing(true)}>Edit</button>
           <button onClick={handleDeletePost}>Delete</button>
         </>
       )}
       <hr />
       <h3>Comments</h3>
+
       <ul>
         {comments.map(comment => (
           <li key={comment.id}>{comment.content}</li>
         ))}
       </ul>
+
       <form onSubmit={handleCommentSubmit}>
+        
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Add a comment"
           required
         />
+
         <button type="submit">Add Comment</button>
+        
       </form>
     </div>
   );

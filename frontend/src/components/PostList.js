@@ -11,8 +11,10 @@ const PostList = () => {
 
    // 컴포넌트가 마운트될 때 실행되는 효과 훅입니다.
   useEffect(() => {
+
     // localStorage에서 저장된 정렬 옵션을 불러옵니다.
     const savedSortBy = localStorage.getItem('sortBy');
+
     if (savedSortBy) {
       setSortBy(savedSortBy);
     }
@@ -57,8 +59,10 @@ const PostList = () => {
 
   // 정렬 옵션 변경 처리 함수
   const handleSortByChange = (e) => {
+
     const newSortBy = e.target.value;
     setSortBy(newSortBy);
+
     localStorage.setItem('sortBy', newSortBy); // localStorage에 정렬 옵션을 저장
   };
 
@@ -71,9 +75,11 @@ const PostList = () => {
 
   // 카테고리별로 그룹화된 게시물을 생성
   const groupedPosts = posts.reduce((acc, post) => {
+
     if (!acc[post.category]) {
       acc[post.category] = [];
     }
+
     acc[post.category].push(post);
     return acc;
   }, {});
@@ -88,6 +94,7 @@ const PostList = () => {
           <option value="likes">Most Liked</option>
           <option value="comments">Most Commented</option>
         </select>
+
         <input
           type="text"
           placeholder="Filter by category"
@@ -99,11 +106,13 @@ const PostList = () => {
       {Object.keys(groupedPosts).map((category) => (
         <div key={category} className="category" >
           <h3>{category}</h3>
+
           <ul>
             {groupedPosts[category].map(post => (
               <li key={post.id} className="post-item">
 
                 <Link to={`/posts/${post.id}`}>{post.title}</Link>
+                <p>by {post.username}</p>
                 {post.file && <img src={`http://localhost:3001/uploads/${post.file}`} alt={post.title} />}
                 <p>Likes: {post.likes}</p>
 
@@ -111,6 +120,7 @@ const PostList = () => {
               </li>
             ))}
           </ul>
+
         </div>
       ))}
     </div>

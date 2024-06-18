@@ -17,7 +17,8 @@ const PostForm = ({ onPostCreated }) => {
     formData.append('title', title);
     formData.append('content', content);
     formData.append('category', category);
-
+    formData.append('username', localStorage.getItem('username')); // 사용자 이름을 FormData 객체에 추가.
+    
     if (file) {
       formData.append('file', file); // 파일을 FormData 객체에 추가합니다.
     }
@@ -68,7 +69,7 @@ const PostForm = ({ onPostCreated }) => {
         onChange={(e) => setCategory(e.target.value)}
         required
       />
-      
+
       <input
         type="file"
         onChange={(e) => setFile(e.target.files[0])} // 파일 선택 시 파일 상태를 업데이트합니다.

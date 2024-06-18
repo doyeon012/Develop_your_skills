@@ -63,7 +63,7 @@ app.post('/login', (req, res) => {
     const user = users.find(user => user.username === username && user.password === password); // 해당 사용자 정보를 찾기.
     
     if (user) {
-      res.status(200).json({ message: 'Login successful' });
+      res.status(200).json({ message: 'Login successful', username: user.username });
     } else {
       res.status(400).json({ message: 'Invalid username or password' }); // 존재하지 않으면 에러 메시지를 반환.
     }
@@ -79,7 +79,7 @@ app.get('/posts', (req, res) => {
 
   // 카테고리 필터링
   let filteredPosts = category ? posts.filter(post => post.category === category) : posts;
-  
+
   // 정렬
   if (sortBy === 'likes') {
     filteredPosts.sort((a, b) => b.likes - a.likes);
@@ -108,7 +108,8 @@ app.post('/posts', upload.single('file'), (req, res) => {
     content: req.body.content,
     category: req.body.category,
     likes: 0, // 좋아요 수를 초기화합니다.
-    file: req.file ? req.file.filename : null // 업로드된 파일의 이름을 저장합니다.
+    file: req.file ? req.file.filename : null, // 업로드된 파일의 이름을 저장합니다.
+    username: req.body.username // 사용자 이름을 게시글에 추가합니다.
   }; // 새로운 게시글을 생성.
   
   posts.push(newPost);  // 새로운 게시글을 배열에 추가.
