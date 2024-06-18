@@ -73,15 +73,29 @@ app.post('/login', (req, res) => {
 // 모든 게시물 조회 (Read All) - 카테고리별로 그룹화
 app.get('/posts', (req, res) => {
   const posts = readData(postsFile);
-  const groupedPosts = posts.reduce((acc, post) => {
-    if (!acc[post.category]) {
-      acc[post.category] = [];
-    }
-    acc[post.category].push(post);
-    return acc;
-  }, {});
 
-  res.status(200).json(posts);
+  // 카테고리 필터링
+  const { sortBy, category } = req.query;
+
+  // 카테고리 필터링
+  let filteredPosts = category ? posts.filter(post => post.category === category) : posts;
+  
+  // 정렬
+  if (sortBy === 'likes') {
+    filteredPosts.sort((a, b) => b.likes - a.likes);
+  } else if (sortBy === 'comments') {
+    const comments = readData(commentsFile);
+    filteredPosts.sort((a, b) => {
+      const aComments = comments.filter(comment => comment.postId === a.id).length;
+      const bComments = comments.filter(comment => comment.postId === b.id).length;
+      return bComments - aComments;
+    });
+  } else {
+    // 기본적으로 최신순 정렬
+    filteredPosts.sort((a, b) => b.id - a.id);
+  }
+
+  res.status(200).json(filteredPosts);
 });
 
 // 게시물 생성 (Create)
