@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors'); // CORS 미들웨어 추가
+const multer = require('multer'); // multer 패키지 추가
 
 const app = express();
 const PORT = 3001;
@@ -11,12 +12,15 @@ const PORT = 3001;
 // 미들웨어 설정
 app.use(bodyParser.json()); // JSON 형식의 요청 본문을 파싱하도록 body-parser를 사용합니다.
 app.use(cors()); // CORS 미들웨어 사용
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // 업로드된 파일을 제공하기 위한 정적 경로 추가
 
 // 파일 경로 설정
 const usersFile = path.join(__dirname, 'data', 'users.json');
 const postsFile = path.join(__dirname, 'data', 'posts.json');
 const commentsFile = path.join(__dirname, 'data', 'comments.json'); // comments.json 파일의 경로를 설정합니다.
 
+// 업로드 디렉토리 설정 및 multer 미들웨어 설정
+const upload = multer({ dest: 'uploads/' }); // 파일 업로드를 위한 디렉토리 설정
 
 // 댓글 데이터를 읽고 쓰는 함수
 const readData = (filePath) => {
@@ -81,9 +85,17 @@ app.get('/posts', (req, res) => {
 });
 
 // 게시물 생성 (Create)
-app.post('/posts', (req, res) => {
+app.post('/posts', upload.single('file'), (req, res) => {
   const posts = readData(postsFile); // 기존 게시글 데이터를 읽어옵니다.
-  const newPost = { id: Date.now(), ...req.body }; // 새로운 게시글을 생성.
+  
+  const newPost = { 
+    id: Date.now(), 
+    title: req.body.title,
+    content: req.body.content,
+    category: req.body.category,
+    likes: 0, // 좋아요 수를 초기화합니다.
+    file: req.file ? req.file.filename : null // 업로드된 파일의 이름을 저장합니다.
+  }; // 새로운 게시글을 생성.
   
   posts.push(newPost);  // 새로운 게시글을 배열에 추가.
   writeData(postsFile, posts); // 게시글 데이터를 파일에 씁니다.
@@ -104,12 +116,20 @@ app.get('/posts/:id', (req, res) => {
 });
 
 // 게시물 수정 (Update)
-app.put('/posts/:id', (req, res) => {
+app.put('/posts/:id', upload.single('file'),  (req, res) => {
   const posts = readData(postsFile);
   const index = posts.findIndex(p => p.id === parseInt(req.params.id));
+  
   if (index !== -1) {
-    posts[index] = { ...posts[index], ...req.body };
+    const updatedPost = { ...posts[index], ...req.body };
+    
+    if (req.file) {
+      updatedPost.file  = req.file.filename;
+    }
+
+    posts[index] = updatedPost; // 업데이트된 게시물을 배열에 반영합니다.
     writeData(postsFile, posts);
+
     res.status(200).json(posts[index]);
   } else {
     res.status(404).json({ message: 'Post not found' });
@@ -120,6 +140,7 @@ app.put('/posts/:id', (req, res) => {
 app.delete('/posts/:id', (req, res) => {
   const posts = readData(postsFile);
   const filteredPosts = posts.filter(p => p.id !== parseInt(req.params.id));
+  
   if (posts.length !== filteredPosts.length) {
     writeData(postsFile, filteredPosts);
     res.status(204).send();
@@ -128,15 +149,15 @@ app.delete('/posts/:id', (req, res) => {
   }
 });
 
-// 게시물 좋아요 (Like)
+// 좋아요 업데이트 라우트
 app.post('/posts/:id/like', (req, res) => {
   const posts = readData(postsFile);
   const index = posts.findIndex(p => p.id === parseInt(req.params.id));
-
   if (index !== -1) {
-    posts[index].likes += 1; // 좋아요 수 증가
 
-    writeData(postsFile, posts); // 변경된 데이터를 posts.json.파일에 쓴다.
+    posts[index].likes = (posts[index].likes || 0) + 1;
+    writeData(postsFile, posts);
+
     res.status(200).json(posts[index]);
 
   } else {

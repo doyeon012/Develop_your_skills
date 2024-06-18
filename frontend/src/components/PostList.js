@@ -18,7 +18,7 @@ const PostList = () => {
   // 좋아요 버튼 클릭 처리 함수
   const handleLike = (postId) => {
     axios.post(`http://localhost:3001/posts/${postId}/like`)
-    
+
       .then(response => {
         setPosts(posts.map(post => post.id === postId ? response.data : post));
       })
@@ -43,8 +43,11 @@ const PostList = () => {
           <ul>
             {groupedPosts[category].map(post => (
               <li key={post.id}>
+
                 <Link to={`/posts/${post.id}`}>{post.title}</Link>
+                {post.file && <img src={`http://localhost:3001/uploads/${post.file}`} alt={post.title} style={{ maxWidth: '200px' }} />}
                 <p>Likes: {post.likes}</p>
+
                 <button onClick={() => handleLike(post.id)}>Like</button>
               </li>
             ))}
