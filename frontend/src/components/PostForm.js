@@ -25,11 +25,18 @@ const PostForm = ( ) => {
     }
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You must be logged in to create a post.');
+        navigate('/login');
+        return;
+      }
 
       // 게시물 생성 요청을 서버에 보냄.
       const response = await axios.post('http://localhost:3001/posts', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
         }
       });
       

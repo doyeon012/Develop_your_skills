@@ -5,9 +5,13 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors'); // CORS 미들웨어 추가
 const multer = require('multer'); // multer 패키지 추가
+const jwt = require('jsonwebtoken'); // jwt 패키지 추가
+
 
 const app = express();
 const PORT = 3001;
+const SECRET_KEY = 'your_secret_key'; // 비밀 키 설정
+
 
 // 미들웨어 설정
 app.use(bodyParser.json()); // JSON 형식의 요청 본문을 파싱하도록 body-parser를 사용합니다.
@@ -62,9 +66,24 @@ const writeData = (filePath, data) => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 };
 
+// JWT 토큰을 확인하는 미들웨어
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == null) return res.sendStatus(401); // 토큰이 없으면 접근 거부
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.sendStatus(403); // 토큰이 유효하지 않으면 접근 거부
+    req.user = user;
+    next();
+  });
+};
+
+
+
+
 
 // 인증 관련 라우트
-
 // 회원가입 라우트
 app.post('/register', (req, res) => {
   const users = readData(usersFile); // 기존 사용자 데이터를 읽기.
@@ -88,7 +107,8 @@ app.post('/login', (req, res) => {
     const user = users.find(user => user.username === username && user.password === password); // 해당 사용자 정보를 찾기.
     
     if (user) {
-      res.status(200).json({ message: 'Login successful', username: user.username });
+      const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+      res.status(200).json({ message: 'Login successful', token });
     } else {
       res.status(400).json({ message: 'Invalid username or password' }); // 존재하지 않으면 에러 메시지를 반환.
     }
@@ -123,7 +143,7 @@ app.get('/posts', (req, res) => {
 });
 
 // 게시물 생성 (Create)
-app.post('/posts', upload.single('file'), (req, res) => {
+app.post('/posts', authenticateToken,  upload.single('file'), (req, res) => {
   const posts = readData(postsFile); // 기존 게시글 데이터를 읽어옵니다.
   
   const newPost = { 

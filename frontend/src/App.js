@@ -1,5 +1,5 @@
 import React, { useState, useEffect  } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link  } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate   } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import PostList from './components/PostList';
@@ -22,20 +22,21 @@ function App() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated'); // 로컬 스토리지에서 인증 상태 삭제
+    localStorage.removeItem('token'); // 토큰 제거
+    localStorage.removeItem('username'); // 로컬 스토리지에서 사용자 이름 삭제
   };
 
    // 인증 상태가 변경될 때 로컬 스토리지에 저장
   useEffect(() => {
-    console.log('Setting Auth Status:', isAuthenticated); // 상태 변경 확인
     localStorage.setItem('isAuthenticated', isAuthenticated);
   }, [isAuthenticated]);
-
 
   return (
     <Router>
       <div className="App">
         <nav>
           <Link to="/">Home</Link>
+          <CreatePostButton isAuthenticated={isAuthenticated} />
           {!isAuthenticated ? (
             <>
               <Link to="/login">Login</Link>
@@ -43,7 +44,6 @@ function App() {
             </>
           ) : (
             <>
-              <Link to="/create">Create Post</Link>
               <button onClick={handleLogout}>Logout</button>
             </>
           )}
@@ -52,11 +52,30 @@ function App() {
           <Route path="/" element={<PostList />} />
           <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/create" element={isAuthenticated ? <PostForm /> : <Login setIsAuthenticated={setIsAuthenticated} />} />
+          <Route path="/create" element={<PostForm/>} />
           <Route path="/posts/:id" element={<PostDetail />} />
         </Routes>
       </div>
     </Router>
+  );
+}
+
+function CreatePostButton({ isAuthenticated }) {
+  const navigate = useNavigate();
+
+  const handleCreatePostClick = () => {
+    if (!isAuthenticated) {
+      alert('로그인 하세요.');
+      navigate('/login');
+    } else {
+      navigate('/create');
+    }
+  };
+
+  return (
+    <Link to="#" onClick={(e) => { e.preventDefault(); handleCreatePostClick(); }}>
+      Create Post
+    </Link>
   );
 }
 
