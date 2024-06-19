@@ -131,12 +131,22 @@ const Chat = ({ username }) => {
         </form>
       </div>
       ) : (
-        <div className="room-controls">
-          <span>Room: {room}</span>
-          <span>Leader: {leader === socket.id ? "You" : leader}</span>
+        <div className="room-info">
+
+          <div className="room-name">
+            <strong>Room:</strong> {room}
+          </div>
+
+          <div className="room-leader">
+            <strong>Leader:</strong> {leader === socket.id ? "You" : leader}
+          </div>
+
           <button onClick={leaveRoom}>Leave Room</button>
         </div>
       )}
+
+    <div className="chat-area">
+
       <div className="messages">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.username === username ? 'my-message' : 'other-message'}`}>
@@ -148,7 +158,8 @@ const Chat = ({ username }) => {
       </div>
 
       {inRoom && (
-        <form onSubmit={sendMessage}>
+        <form className="message-form" onSubmit={sendMessage}>
+          
           <input
             type="text"
             value={message}
@@ -159,6 +170,7 @@ const Chat = ({ username }) => {
         </form>
       )}
     </div>
+</div>
   );
 };
 
