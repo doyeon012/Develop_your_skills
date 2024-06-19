@@ -141,7 +141,7 @@ const PostList = () => {
   }, {}) : {};
 
   return (
-    <div className="post-list" >
+    <div className="post-list">
       <h2>Posts</h2>
 
       <div className="filters">
@@ -158,7 +158,7 @@ const PostList = () => {
           onChange={handleCategoryChange}
         />
 
-          <div className="search-bar">
+        <div className="search-bar">
           <input
             type="text"
             placeholder="Search by title or ID"
@@ -171,24 +171,20 @@ const PostList = () => {
       </div>
 
       {Object.keys(groupedPosts).map((category) => (
-        <div key={category} className="category" >
+        <div key={category} className="category">
           <h3>{category}</h3>
 
           <ul>
             {groupedPosts[category].map(post => (
               <li key={post.id} className="post-item">
-
                 <Link to={`/posts/${post.id}`} state={{ sortBy, category }}>{post.title}</Link>
                 <p>by {post.username}</p>
-                
                 {post.file && <img src={`http://localhost:3001/uploads/${post.file}`} alt={post.title} />}
                 <p>Likes: {post.likes}</p>
-
                 <button onClick={() => handleLike(post.id)}>Like</button>
               </li>
             ))}
           </ul>
-
         </div>
       ))}
 
@@ -203,7 +199,6 @@ const PostList = () => {
           </button>
         ))}
       </div>
-
     </div>
   );
 };

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate  } from 'react-router-dom';
+import '../PostDetail.css'; // PostList 전용 CSS 파일을 추가하여 스타일링
+
 
 // PostDetail 컴포넌트 정의
 const PostDetail = () => {
@@ -113,62 +115,57 @@ const PostDetail = () => {
   };
 
   return (
-    <div>
-      {isEditing ? (
-        <form onSubmit={handleEditSubmit}>
-          
-          <input
-            type="text"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            required
-          />
-
-          <textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            required
-          />
-
-          <button type="submit">Update Post</button>
-          <button type="button" onClick={() => setIsEditing(false)}>Cancel</button>
-
-        </form>
-      ) : (
-        <>
-          <h2>{post.title}</h2>
-          <p>{post.content}</p>
-
-          <p>by {post.username}</p>
-
-          <button onClick={() => setIsEditing(true)}>Edit</button>
-          <button onClick={handleDeletePost}>Delete</button>
-        </>
-      )}
+    <div className="post-detail">
+      <div className="post-content">
+        {isEditing ? (
+          <form onSubmit={handleEditSubmit} className="edit-form">
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              required
+            />
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              required
+            />
+            <div className="edit-buttons">
+              <button type="submit">Update Post</button>
+              <button type="button" onClick={() => setIsEditing(false)}>Cancel</button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <h2>{post.title}</h2>
+            <p>{post.content}</p>
+            <p>by {post.username}</p>
+            <div className="post-buttons">
+              <button onClick={() => setIsEditing(true)}>Edit</button>
+              <button onClick={handleDeletePost}>Delete</button>
+            </div>
+          </>
+        )}
+      </div>
       <hr />
-      <h3>Comments</h3>
-
-      <ul>
-        {comments.map(comment => (
-          <li key={comment.id}>{comment.content}</li>
-        ))}
-      </ul>
-
-      <form onSubmit={handleCommentSubmit}>
-        
-        <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment"
-          required
-        />
-
-        <button type="submit">Add Comment</button>
-
-      </form>
-
-      <button onClick={handleBack}>Back</button>
-
+      <div className="comments-section">
+        <h3>Comments</h3>
+        <ul className="comments-list">
+          {comments.map(comment => (
+            <li key={comment.id}>{comment.content}</li>
+          ))}
+        </ul>
+        <form onSubmit={handleCommentSubmit} className="comment-form">
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment"
+            required
+          />
+          <button type="submit">Add Comment</button>
+        </form>
+      </div>
+      <button onClick={handleBack} className="back-button">Back</button>
     </div>
   );
 };
