@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // useNavigate 훅을 import
 
-const Login = ({ setIsAuthenticated }) => {
+const Login = ({ setIsAuthenticated, setUsername: setGlobalUsername }) => { // setUsername prop 추가
 
    // 상태 변수 설정
   const [username, setUsername] = useState(''); // 사용자 이름 상태 변수
@@ -25,6 +25,8 @@ const Login = ({ setIsAuthenticated }) => {
         localStorage.setItem('isAuthenticated', 'true'); // 로컬 스토리지에 인증 상태 저장
         localStorage.setItem('token', token); // 토큰 저장
         localStorage.setItem('username', displayName); // 사용자 이름을 로컬 스토리지에 저장
+        
+        setGlobalUsername(displayName); // 상위 컴포넌트의 상태 업데이트
         
         alert(response.data.message); // 로그인 성공 메시지 표시
         navigate('/'); // 로그인 성공 후 홈 화면으로 이동

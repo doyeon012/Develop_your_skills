@@ -1,5 +1,9 @@
 // 모듈 임포트 및 앱설정
 const express = require('express');
+
+const http = require('http'); // http 모듈 import
+const socketIo = require('socket.io');
+
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
@@ -7,8 +11,16 @@ const cors = require('cors'); // CORS 미들웨어 추가
 const multer = require('multer'); // multer 패키지 추가
 const jwt = require('jsonwebtoken'); // jwt 패키지 추가
 
-
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:3000", // React 클라이언트의 주소
+    methods: ["GET", "POST"]
+  }
+});
+
+
 const PORT = 3001;
 const SECRET_KEY = 'your_secret_key'; // 비밀 키 설정
 
@@ -259,9 +271,21 @@ app.get('/posts/:id/comments', (req, res) => {
   res.status(200).json(postComments);
 });
 
+// 채팅 설정
+io.on('connection', (socket) => {
+  console.log('a user connected');
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+
+  socket.on('chat message', (msg) => {
+    io.emit('chat message', msg);
+  });
+});
 
 
 // 서버 시작
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

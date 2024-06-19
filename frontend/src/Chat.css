@@ -1,0 +1,76 @@
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 600px;
+    height: 100vh;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+  }
+  
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .message {
+    display: flex;
+    margin-bottom: 10px;
+  }
+  
+  .my-message {
+    justify-content: flex-end;
+  }
+  
+  .other-message {
+    justify-content: flex-start;
+  }
+  
+  .message-username {
+    font-weight: bold;
+    margin-right: 5px;
+  }
+  
+  .message-text {
+    max-width: 60%;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #e1ffc7; /* 내가 보낸 메시지 배경색 */
+  }
+  
+  .my-message .message-text {
+    background-color: #c7e1ff; /* 상대방이 보낸 메시지 배경색 */
+  }
+  
+  form {
+    display: flex;
+    padding: 10px;
+  }
+  
+  input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-right: 10px;
+  }
+  
+  button[type="submit"] {
+    padding: 10px 20px;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+  }
+  
+  button[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+  
