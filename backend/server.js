@@ -119,19 +119,31 @@ app.post('/login', (req, res) => {
 app.get('/posts', (req, res) => {
 
   const posts = readData(postsFile);
-  const { sortBy, category } = req.query;
+  const { sortBy, category, search  } = req.query;
 
   // 카테고리 필터링
   let filteredPosts = category ? posts.filter(post => post.category === category) : posts;
+
+  // 검색 필터링
+  if (search) {
+    filteredPosts = filteredPosts.filter(post =>
+      (post.title && post.title.toLowerCase().includes(search.toLowerCase())) ||
+      (post.username && post.username.toLowerCase().includes(search.toLowerCase()))
+    );
+  }
+
 
   // 정렬
   if (sortBy === 'likes') {
     filteredPosts.sort((a, b) => b.likes - a.likes);
   } else if (sortBy === 'comments') {
     const comments = readData(commentsFile);
+
     filteredPosts.sort((a, b) => {
+
       const aComments = comments.filter(comment => comment.postId === a.id).length;
       const bComments = comments.filter(comment => comment.postId === b.id).length;
+      
       return bComments - aComments;
     });
   } else {

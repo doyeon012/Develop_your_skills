@@ -9,9 +9,30 @@
 }
 
 .filters select,
-.filters input {
+.filters input,
+.filters .search-bar {
   padding: 10px;
   margin-right: 10px;
+}
+
+.search-bar {
+  display: flex;
+}
+
+.search-bar input {
+  flex: 1;
+}
+
+.search-bar button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.search-bar button:hover {
+  background-color: #0056b3;
 }
 
 .category {
@@ -37,7 +58,6 @@
   background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
 }
 
