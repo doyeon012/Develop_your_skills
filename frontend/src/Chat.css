@@ -1,10 +1,5 @@
 .chat-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 600px;
-    height: 100vh;
+    width: 80%;
     margin: 0 auto;
     padding: 20px;
     border: 1px solid #ccc;
@@ -12,45 +7,65 @@
     background-color: #f9f9f9;
   }
   
-  .messages {
-    flex: 1;
-    overflow-y: auto;
+  .room-controls {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .room-controls input {
     padding: 10px;
-    border-bottom: 1px solid #ccc;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-right: 10px;
+  }
+  
+  .room-controls button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  
+  .room-controls button:hover {
+    background-color: #0056b3;
+  }
+  
+  .messages {
+    height: 300px;
+    overflow-y: scroll;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #fff;
   }
   
   .message {
-    display: flex;
-    margin-bottom: 10px;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
   }
   
   .my-message {
-    justify-content: flex-end;
+    background-color: #d1e7dd;
+    text-align: right;
   }
   
   .other-message {
-    justify-content: flex-start;
+    background-color: #f8d7da;
+    text-align: left;
   }
   
   .message-username {
     font-weight: bold;
-    margin-right: 5px;
-  }
-  
-  .message-text {
-    max-width: 60%;
-    padding: 10px;
-    border-radius: 10px;
-    background-color: #e1ffc7; /* 내가 보낸 메시지 배경색 */
-  }
-  
-  .my-message .message-text {
-    background-color: #c7e1ff; /* 상대방이 보낸 메시지 배경색 */
   }
   
   form {
     display: flex;
-    padding: 10px;
   }
   
   input[type="text"] {
@@ -61,16 +76,16 @@
     margin-right: 10px;
   }
   
-  button[type="submit"] {
+  button {
     padding: 10px 20px;
-    background-color: #007bff;
     border: none;
     border-radius: 5px;
+    background-color: #007bff;
     color: white;
     cursor: pointer;
   }
   
-  button[type="submit"]:hover {
+  button:hover {
     background-color: #0056b3;
   }
   

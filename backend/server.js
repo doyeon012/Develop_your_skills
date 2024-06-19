@@ -271,17 +271,31 @@ app.get('/posts/:id/comments', (req, res) => {
   res.status(200).json(postComments);
 });
 
-// 채팅 설정
+// 채팅 설정(여러 방 지원 추가)
 io.on('connection', (socket) => {
   console.log('a user connected');
+
+  // 클라이언트에서 방에 참가하는 이벤트 수신
+  socket.on('join room', (room) => {
+    socket.join(room);
+    console.log(`User joined room: ${room}`);
+  });
+
+  // 클라이언트에서 방을 나가는 이벤트 수신
+  socket.on('leave room', (room) => {
+    socket.leave(room);
+    console.log(`User left room: ${room}`);
+  });
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
 
+  // 방에 있는 클라이언트에게 메시지 보내기
   socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
+    io.to(msg.room).emit('chat message', msg);
   });
+  
 });
 
 

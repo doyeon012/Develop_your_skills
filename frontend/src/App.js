@@ -47,7 +47,7 @@ function App() {
       <div className="App">
         <nav>
           <Link to="/">Home</Link>
-          <Link to="/chat">Chat</Link>
+          <Link to="/chat">실시간 채팅방</Link>
           <CreatePostButton isAuthenticated={isAuthenticated} />
           {!isAuthenticated ? (
             <>
