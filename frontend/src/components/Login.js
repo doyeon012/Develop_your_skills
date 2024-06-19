@@ -22,12 +22,12 @@ const Login = ({ setIsAuthenticated, setUsername: setGlobalUsername }) => { // s
         setIsAuthenticated(true); // 인증 상태 업데이트
         const token = response.data.token;
         const displayName = username.split('@')[0]; // '@' 전까지의 부분만 저장
-        localStorage.setItem('isAuthenticated', 'true'); // 로컬 스토리지에 인증 상태 저장
-        localStorage.setItem('token', token); // 토큰 저장
-        localStorage.setItem('username', displayName); // 사용자 이름을 로컬 스토리지에 저장
+        sessionStorage.setItem('isAuthenticated', 'true'); // 로컬 스토리지에 인증 상태 저장
+        sessionStorage.setItem('token', token); // 토큰 저장
+        sessionStorage.setItem('username', displayName); // 사용자 이름을 로컬 스토리지에 저장
         
         setGlobalUsername(displayName); // 상위 컴포넌트의 상태 업데이트
-        
+
         alert(response.data.message); // 로그인 성공 메시지 표시
         navigate('/'); // 로그인 성공 후 홈 화면으로 이동
 

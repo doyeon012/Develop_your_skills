@@ -33,8 +33,8 @@ const PostList = () => {
    // 컴포넌트가 마운트될 때 실행되는 효과 훅입니다.
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
-    const savedSortBy = queryParams.get('sortBy') || localStorage.getItem('sortBy') || 'latest';
-    const savedCategory = queryParams.get('category') || localStorage.getItem('category') || '';
+    const savedSortBy = queryParams.get('sortBy') || sessionStorage.getItem('sortBy') || 'latest';
+    const savedCategory = queryParams.get('category') || sessionStorage.getItem('category') || '';
     const savedSearch = queryParams.get('search') || '';
     
     setSortBy(savedSortBy);
@@ -42,10 +42,10 @@ const PostList = () => {
     setSearch(savedSearch);
     setSearchInput(savedSearch);
 
-    // 상태를 localStorage에 저장
-    localStorage.setItem('sortBy', savedSortBy);
-    localStorage.setItem('category', savedCategory);
-    localStorage.setItem('search', savedSearch);
+    // 상태를 sessionStorage에 저장
+    sessionStorage.setItem('sortBy', savedSortBy);
+    sessionStorage.setItem('category', savedCategory);
+    sessionStorage.setItem('search', savedSearch);
   }, [location.search]);
 
   useEffect(() => {
@@ -103,10 +103,10 @@ const PostList = () => {
   const updateURL = (sortBy, category, search) => {
     navigate(`/?sortBy=${sortBy}&category=${category}&search=${search}`, { replace: true });
 
-    // 상태를 localStorage에 저장
-    localStorage.setItem('sortBy', sortBy);
-    localStorage.setItem('category', category);
-    localStorage.setItem('search', search);
+    // 상태를 sessionStorage에 저장
+    sessionStorage.setItem('sortBy', sortBy);
+    sessionStorage.setItem('category', category);
+    sessionStorage.setItem('search', search);
   };
 
   // 카테고리별로 그룹화된 게시물을 생성

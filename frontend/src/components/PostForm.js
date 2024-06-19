@@ -18,14 +18,14 @@ const PostForm = ( ) => {
     formData.append('title', title);
     formData.append('content', content);
     formData.append('category', category);
-    formData.append('username', localStorage.getItem('username')); // 사용자 이름을 FormData 객체에 추가.
+    formData.append('username', sessionStorage.getItem('username')); // 사용자 이름을 FormData 객체에 추가.
     
     if (file) {
       formData.append('file', file); // 파일을 FormData 객체에 추가.
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (!token) {
         alert('You must be logged in to create a post.');
         navigate('/login');
@@ -43,8 +43,8 @@ const PostForm = ( ) => {
       if (response.status === 201) {
         alert('Post created successfully'); // 성공 메시지 표시
 
-        const sortBy = localStorage.getItem('sortBy') || 'latest';
-        const category = localStorage.getItem('category') || '';
+        const sortBy = sessionStorage.getItem('sortBy') || 'latest';
+        const category = sessionStorage.getItem('category') || '';
 
         navigate(`/?sortBy=${sortBy}&category=${category}`, { replace: true });
         window.location.reload(); // 페이지를 새로고침하여 정렬 옵션과 필터를 유지

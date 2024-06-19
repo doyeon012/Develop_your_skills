@@ -13,8 +13,8 @@ function App() {
   const [username, setUsername] = useState('');
 
   useEffect(() => {
-    const authStatus = localStorage.getItem('isAuthenticated');
-    const storedUsername = localStorage.getItem('username');
+    const authStatus = sessionStorage.getItem('isAuthenticated');
+    const storedUsername = sessionStorage.getItem('username');
 
     if (authStatus === 'true' && storedUsername ) {
       setIsAuthenticated(true);
@@ -28,17 +28,17 @@ function App() {
     setIsAuthenticated(false);
     setUsername('');
 
-    localStorage.removeItem('isAuthenticated'); // 로컬 스토리지에서 인증 상태 삭제
-    localStorage.removeItem('token'); // 토큰 제거
-    localStorage.removeItem('username'); // 로컬 스토리지에서 사용자 이름 삭제
+    sessionStorage.removeItem('isAuthenticated'); // 로컬 스토리지에서 인증 상태 삭제
+    sessionStorage.removeItem('token'); // 토큰 제거
+    sessionStorage.removeItem('username'); // 로컬 스토리지에서 사용자 이름 삭제
   };
 
    // 인증 상태가 변경될 때 로컬 스토리지에 저장
   useEffect(() => {
-    localStorage.setItem('isAuthenticated', isAuthenticated);
-    
+    sessionStorage.setItem('isAuthenticated', isAuthenticated);
+
     if (isAuthenticated) {
-      localStorage.setItem('username', username);
+      sessionStorage.setItem('username', username);
     }
   }, [isAuthenticated, username]);
 

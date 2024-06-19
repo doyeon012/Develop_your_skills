@@ -106,8 +106,8 @@ const PostDetail = () => {
 
   // 뒤로가기 버튼 핸들러
   const handleBack = () => {
-    const sortBy = localStorage.getItem('sortBy') || 'latest';
-    const category = localStorage.getItem('category') || '';
+    const sortBy = sessionStorage.getItem('sortBy') || 'latest';
+    const category = sessionStorage.getItem('category') || '';
     navigate(`/?sortBy=${sortBy}&category=${category}`, { replace: true }); // 상태 전달
     window.location.reload(); // 페이지를 새로고침하여 정렬 옵션과 필터를 유지
   };
