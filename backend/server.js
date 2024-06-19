@@ -227,6 +227,7 @@ app.delete('/posts/:id', (req, res) => {
   if (posts.length !== filteredPosts.length) {
     writeData(postsFile, filteredPosts);
     res.status(204).send();
+
   } else {
     res.status(404).json({ message: 'Post not found' });
   }
@@ -249,7 +250,7 @@ app.post('/posts/:id/like', (req, res) => {
 });
 
 
-// 댓글 관련
+/* 댓글 관련 */
 // 댓글 생성 (Create)
 app.post('/posts/:id/comments', (req, res) => {
   const comments = readData(commentsFile);
@@ -271,31 +272,73 @@ app.get('/posts/:id/comments', (req, res) => {
   res.status(200).json(postComments);
 });
 
+
+/* 채팅 관련 */
+// 방 목록 관리
+const rooms = new Map();
+
+
 // 채팅 설정(여러 방 지원 추가)
 io.on('connection', (socket) => {
   console.log('a user connected');
 
+  // 클라이언트에 방 목록을 전송하는 함수
+  const updateRoomList = () => {
+    io.emit('room list', Array.from(rooms.keys()));
+  };
+
   // 클라이언트에서 방에 참가하는 이벤트 수신
   socket.on('join room', (room) => {
+
     socket.join(room);
+
+    if (!rooms.has(room)) {
+      rooms.set(room, new Set());
+    }
+
+    rooms.get(room).add(socket.id); // 방 목록에 추가
     console.log(`User joined room: ${room}`);
+    updateRoomList();
+    
   });
 
   // 클라이언트에서 방을 나가는 이벤트 수신
   socket.on('leave room', (room) => {
+
     socket.leave(room);
+
+    // 방에 남은 사람이 없으면 방 목록에서 제거
+    if (rooms.has(room)) {
+      rooms.get(room).delete(socket.id);
+      if (rooms.get(room).size === 0) {
+        rooms.delete(room);
+      }
+    }
+
     console.log(`User left room: ${room}`);
+    updateRoomList();
+
   });
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
+    rooms.forEach((sockets, room) => {
+      sockets.delete(socket.id);
+      if (sockets.size === 0) {
+        rooms.delete(room);
+      }
+    });
+    updateRoomList();
   });
 
   // 방에 있는 클라이언트에게 메시지 보내기
   socket.on('chat message', (msg) => {
     io.to(msg.room).emit('chat message', msg);
   });
-  
+
+  // 클라이언트 연결 시 초기 방 목록 전송
+  updateRoomList();
+
 });
 
 

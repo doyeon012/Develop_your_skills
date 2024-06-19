@@ -7,41 +7,10 @@
     background-color: #f9f9f9;
   }
   
-  .room-controls {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  
-  .room-controls input {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
-  
-  .room-controls button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    margin-right: 10px;
-  }
-  
-  .room-controls button:hover {
-    background-color: #0056b3;
-  }
-  
   .messages {
     height: 300px;
     overflow-y: scroll;
     margin-bottom: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    background-color: #fff;
   }
   
   .message {
@@ -85,7 +54,27 @@
     cursor: pointer;
   }
   
-  button:hover {
-    background-color: #0056b3;
+  .room-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .room-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 5px;
+  }
+  
+  .room-list button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
   }
   

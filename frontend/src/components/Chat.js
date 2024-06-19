@@ -9,28 +9,42 @@ const Chat = ({ username }) => {
   const [messages, setMessages] = useState([]);
   const [room, setRoom] = useState(''); // 방 상태 변수 추가
   const [inRoom, setInRoom] = useState(false); // 사용자가 방에 있는지 여부를 저장
+  const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
     socket.on('chat message', (msg) => {
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
 
+    socket.on('room list', (rooms) => {
+        setRooms(rooms);
+      });
+
     return () => {
       socket.off('chat message');
+      socket.off('room list');
     };
   }, []);
 
 
   const joinRoom = (e) => {
     e.preventDefault();
+
     if (room) {
       socket.emit('join room', room);
       setInRoom(true); // 방에 성공적으로 조인했을 때 상태 변경
     }
   };
+  
+  const joinSpecificRoom = (roomName) => {
+    setRoom(roomName);
+    socket.emit('join room', roomName);
+    setInRoom(true);
+  };
 
   const leaveRoom = (e) => {
     e.preventDefault();
+
     if (room) {
       socket.emit('leave room', room);
       setInRoom(false); // 방을 떠났을 때 상태 변경
@@ -51,14 +65,30 @@ const Chat = ({ username }) => {
   return (
     <div className="chat-container">
       <h2>Chat</h2>
+
+      <div className="room-list">
+        <h3>Available Rooms</h3>
+        
+        <ul>
+          {rooms.map((room, index) => (
+            <li key={index}>
+            {room}
+            <button onClick={() => joinSpecificRoom(room)}>Join Room</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       {!inRoom ? (
         <form className="room-controls" onSubmit={joinRoom}>
+
           <input
             type="text"
             value={room}
             onChange={(e) => setRoom(e.target.value)}
             placeholder="Enter room name..."
           />
+          
           <button type="submit">Join Room</button>
         </form>
       ) : (
