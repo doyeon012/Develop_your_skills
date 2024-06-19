@@ -282,36 +282,67 @@ const rooms = new Map();
 io.on('connection', (socket) => {
   console.log('a user connected');
 
+
   // 클라이언트에 방 목록을 전송하는 함수
   const updateRoomList = () => {
     io.emit('room list', Array.from(rooms.keys()));
   };
 
+  const updateRoomLeader = (room) => {
+    const roomData = rooms.get(room);
+
+    if (roomData && roomData.users.size > 0) {
+      const newLeader = Array.from(roomData.users.keys())[0];
+      roomData.leader = newLeader;
+      const leaderName = roomData.users.get(newLeader);
+
+      io.to(room).emit('update leader', { room, leader: leaderName  });
+    }
+  };
+
+  // 클라이언트에서 방을 생성하는 이벤트 수신
+  socket.on('create room', ({ room, username }) => {
+
+    if (!rooms.has(room)) {
+      rooms.set(room, { users: new Map(), leader: socket.id });
+    }
+    rooms.get(room).users.set(socket.id, username);
+    socket.join(room);
+
+    updateRoomList();
+    updateRoomLeader(room);
+  });
+
   // 클라이언트에서 방에 참가하는 이벤트 수신
-  socket.on('join room', (room) => {
+  socket.on('join room', ({ room, username }) => {
 
     socket.join(room);
 
     if (!rooms.has(room)) {
-      rooms.set(room, new Set());
+      rooms.set(room, { users: new Map(), leader: null });
     }
 
-    rooms.get(room).add(socket.id); // 방 목록에 추가
+    rooms.get(room).users.set(socket.id, username);
+    if (!rooms.get(room).leader) {
+      rooms.get(room).leader = socket.id;
+    }
+
     console.log(`User joined room: ${room}`);
+
     updateRoomList();
-    
+    updateRoomLeader(room);
   });
 
   // 클라이언트에서 방을 나가는 이벤트 수신
   socket.on('leave room', (room) => {
-
     socket.leave(room);
 
-    // 방에 남은 사람이 없으면 방 목록에서 제거
     if (rooms.has(room)) {
-      rooms.get(room).delete(socket.id);
-      if (rooms.get(room).size === 0) {
+      rooms.get(room).users.delete(socket.id);
+      if (rooms.get(room).users.size === 0) {
         rooms.delete(room);
+      } else if (rooms.get(room).leader === socket.id) {
+        updateRoomLeader(room);
       }
     }
 
@@ -322,12 +353,16 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
-    rooms.forEach((sockets, room) => {
-      sockets.delete(socket.id);
-      if (sockets.size === 0) {
+
+    rooms.forEach((roomData, room) => {
+      roomData.users.delete(socket.id);
+      if (roomData.users.size === 0) {
         rooms.delete(room);
+      } else if (roomData.leader === socket.id) {
+        updateRoomLeader(room);
       }
     });
+
     updateRoomList();
   });
 
