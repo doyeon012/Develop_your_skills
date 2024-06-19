@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import io from 'socket.io-client';
 import '../Chat.css';
 
@@ -10,6 +10,7 @@ const Chat = ({ username }) => {
   const [room, setRoom] = useState(''); // 방 상태 변수 추가
   const [inRoom, setInRoom] = useState(false); // 사용자가 방에 있는지 여부를 저장
   const [rooms, setRooms] = useState([]);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     socket.on('chat message', (msg) => {
@@ -26,6 +27,9 @@ const Chat = ({ username }) => {
     };
   }, []);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const joinRoom = (e) => {
     e.preventDefault();
@@ -88,7 +92,7 @@ const Chat = ({ username }) => {
             onChange={(e) => setRoom(e.target.value)}
             placeholder="Enter room name..."
           />
-          
+
           <button type="submit">Join Room</button>
         </form>
       ) : (
@@ -104,6 +108,7 @@ const Chat = ({ username }) => {
             <span className="message-text">{msg.text}</span>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
       {inRoom && (
         <form onSubmit={sendMessage}>
