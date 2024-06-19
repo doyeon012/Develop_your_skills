@@ -131,7 +131,7 @@ app.post('/login', (req, res) => {
 app.get('/posts', (req, res) => {
 
   const posts = readData(postsFile);
-  const { sortBy, category, search  } = req.query;
+  const { sortBy, category, search, page = 1, limit = 10  } = req.query;
 
   // 카테고리 필터링
   let filteredPosts = category ? posts.filter(post => post.category === category) : posts;
@@ -163,7 +163,17 @@ app.get('/posts', (req, res) => {
     filteredPosts.sort((a, b) => b.id - a.id);
   }
 
-  res.status(200).json(filteredPosts);
+  // 페이지네이션
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const paginatedPosts = filteredPosts.slice(startIndex, endIndex);
+
+  res.status(200).json({
+    totalPages: Math.ceil(filteredPosts.length / limit),
+    currentPage: page,
+    posts: paginatedPosts,
+  });
+  
 });
 
 // 게시물 생성 (Create)

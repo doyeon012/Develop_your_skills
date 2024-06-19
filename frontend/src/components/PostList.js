@@ -11,6 +11,9 @@ const PostList = () => {
   const [search, setSearch] = useState(''); // 검색어 상태를 관리하는 상태 변수 초기화.
   const [searchInput, setSearchInput] = useState(''); // 검색 입력 필드 상태를 관리하는 상태 변수 초기화.
 
+  const [currentPage, setCurrentPage] = useState(1); // 현재 페이지 상태 변수 초기화.
+  const [totalPages, setTotalPages] = useState(1); // 총 페이지 수 상태 변수 초기화.
+
   const navigate = useNavigate(); // useNavigate 훅 사용
   const location = useLocation();
   
@@ -20,14 +23,17 @@ const PostList = () => {
       params: {
         sortBy,
         category,
-        search
+        search,
+        page: currentPage,
+        limit: 10
       },
     })
       .then(response => {
-        setPosts(response.data);
+        setPosts(response.data.posts);
+        setTotalPages(response.data.totalPages);
       })
       .catch(error => console.error('Error fetching posts:', error));
-  }, [sortBy, category, search]);
+  }, [sortBy, category, search, currentPage]);
 
 
    // 컴포넌트가 마운트될 때 실행되는 효과 훅입니다.
@@ -36,22 +42,29 @@ const PostList = () => {
     const savedSortBy = queryParams.get('sortBy') || sessionStorage.getItem('sortBy') || 'latest';
     const savedCategory = queryParams.get('category') || sessionStorage.getItem('category') || '';
     const savedSearch = queryParams.get('search') || '';
-    
+    const savedPage = queryParams.get('page') || 1;
+
     setSortBy(savedSortBy);
     setCategory(savedCategory);
     setSearch(savedSearch);
     setSearchInput(savedSearch);
+    setCurrentPage(parseInt(savedPage));
 
     // 상태를 sessionStorage에 저장
     sessionStorage.setItem('sortBy', savedSortBy);
     sessionStorage.setItem('category', savedCategory);
     sessionStorage.setItem('search', savedSearch);
+    sessionStorage.setItem('page', savedPage);
   }, [location.search]);
 
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
 
+
+  useEffect(() => {
+    window.scrollTo(0, 0); // 페이지가 변경될 때 스크롤을 맨 위로 이동
+  }, [currentPage]);
 
   // 좋아요 버튼 클릭 처리 함수
   const handleLike = (postId) => {
@@ -87,7 +100,7 @@ const PostList = () => {
     const newSortBy = e.target.value;
 
     setSortBy(newSortBy);
-    updateURL(newSortBy, category, search);
+    updateURL(newSortBy, category, search, 1);
   };
 
   // 카테고리 필터 변경 처리 함수
@@ -95,22 +108,29 @@ const PostList = () => {
     const newCategory = e.target.value;
 
     setCategory(newCategory);
-    updateURL(sortBy, newCategory, search);
+    updateURL(sortBy, newCategory, search, 1);
+  };
+
+  // 페이지 변경 처리 함수
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    updateURL(sortBy, category, search, page);
   };
 
 
   // URL 업데이트 함수
-  const updateURL = (sortBy, category, search) => {
-    navigate(`/?sortBy=${sortBy}&category=${category}&search=${search}`, { replace: true });
+  const updateURL = (sortBy, category, search, page) => {
+    navigate(`/?sortBy=${sortBy}&category=${category}&search=${search}&page=${page}`, { replace: true });
 
     // 상태를 sessionStorage에 저장
     sessionStorage.setItem('sortBy', sortBy);
     sessionStorage.setItem('category', category);
     sessionStorage.setItem('search', search);
+    sessionStorage.setItem('page', page);
   };
 
   // 카테고리별로 그룹화된 게시물을 생성
-  const groupedPosts = posts.reduce((acc, post) => {
+  const groupedPosts = posts && Array.isArray(posts) ? posts.reduce((acc, post) => {
 
     if (!acc[post.category]) {
       acc[post.category] = [];
@@ -118,7 +138,7 @@ const PostList = () => {
 
     acc[post.category].push(post);
     return acc;
-  }, {});
+  }, {}) : {};
 
   return (
     <div className="post-list" >
@@ -171,6 +191,19 @@ const PostList = () => {
 
         </div>
       ))}
+
+      <div className="pagination">
+        {Array.from({ length: totalPages }, (_, index) => (
+          <button
+            key={index + 1}
+            onClick={() => handlePageChange(index + 1)}
+            className={currentPage === index + 1 ? 'active' : ''}
+          >
+            {index + 1}
+          </button>
+        ))}
+      </div>
+
     </div>
   );
 };
