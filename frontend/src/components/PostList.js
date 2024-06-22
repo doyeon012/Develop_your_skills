@@ -17,6 +17,7 @@ const PostList = () => {
   const navigate = useNavigate(); // useNavigate 훅 사용
   const location = useLocation();
   
+
   // 게시물 데이터를 가져오는 함수
   const fetchPosts = useCallback(() => {
     axios.get('http://localhost:3001/posts', {
@@ -71,7 +72,7 @@ const PostList = () => {
     axios.post(`http://localhost:3001/posts/${postId}/like`)
 
       .then(response => {
-        setPosts(posts.map(post => post.id === postId ? response.data : post));
+        setPosts(posts.map(post => post._id  === postId ? response.data : post));
       })
       .catch(error => console.error('Error liking post:', error));
   };
@@ -129,13 +130,11 @@ const PostList = () => {
     sessionStorage.setItem('page', page);
   };
 
-  // 카테고리별로 그룹화된 게시물을 생성
+ // 카테고리별로 그룹화된 게시물을 생성
   const groupedPosts = posts && Array.isArray(posts) ? posts.reduce((acc, post) => {
-
     if (!acc[post.category]) {
       acc[post.category] = [];
     }
-
     acc[post.category].push(post);
     return acc;
   }, {}) : {};
@@ -176,12 +175,12 @@ const PostList = () => {
 
           <ul>
             {groupedPosts[category].map(post => (
-              <li key={post.id} className="post-item">
-                <Link to={`/posts/${post.id}`} state={{ sortBy, category }}>{post.title}</Link>
+              <li key={post._id} className="post-item">
+                <Link to={`/posts/${post._id}`} state={{ sortBy, category }}>{post.title}</Link>
                 <p>by {post.username}</p>
                 {post.file && <img src={`http://localhost:3001/uploads/${post.file}`} alt={post.title} />}
                 <p>Likes: {post.likes}</p>
-                <button onClick={() => handleLike(post.id)}>Like</button>
+                <button onClick={() => handleLike(post._id)}>Like</button>
               </li>
             ))}
           </ul>

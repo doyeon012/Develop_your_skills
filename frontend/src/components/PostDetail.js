@@ -17,8 +17,10 @@ const PostDetail = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
 
+
    // 컴포넌트가 마운트될 때 게시물 및 댓글 데이터를 가져오는 함수
-  useEffect(() => {
+  useEffect(() => { 
+    console.log('Fetching post with id:', id);
 
     // 게시물 데이터를 가져오는 함수
     const fetchPost = async () => {
@@ -37,6 +39,7 @@ const PostDetail = () => {
     // 댓글 데이터를 가져오는 함수
     const fetchComments = async () => {
       try {
+        console.log('Fetching comments for post with id:', id);
         const response = await axios.get(`http://localhost:3001/posts/${id}/comments`);
         setComments(response.data);
 
@@ -52,7 +55,12 @@ const PostDetail = () => {
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`http://localhost:3001/posts/${id}/comments`, { content: newComment });
+      const token = sessionStorage.getItem('token');
+      const response = await axios.post(`http://localhost:3001/posts/${id}/comments`, { content: newComment }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
       if (response.status === 201) {
 
@@ -95,6 +103,7 @@ const PostDetail = () => {
       
       if (response.status === 204) {
         navigate('/'); // 게시물 삭제 후 홈 페이지로 이동
+        
       } else {
         alert('Failed to delete post');
       }
@@ -152,7 +161,7 @@ const PostDetail = () => {
         <h3>Comments</h3>
         <ul className="comments-list">
           {comments.map(comment => (
-            <li key={comment.id}>{comment.content}</li>
+            <li key={comment._id}>{comment.content}</li>
           ))}
         </ul>
         <form onSubmit={handleCommentSubmit} className="comment-form">

@@ -2,17 +2,22 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const Profile = ({ username }) => {
+  const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const token = sessionStorage.getItem('token');
-        const response = await axios.get('http://localhost:3001/posts', {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await axios.get('http://localhost:3001/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
-        const userPosts = response.data.posts.filter(post => post.username === username);
-        setPosts(userPosts);
+
+        setProfile(response.data.user);
+        setPosts(response.data.posts);
+
       } catch (error) {
         console.error('Failed to fetch posts:', error);
       }

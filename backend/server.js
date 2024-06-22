@@ -11,6 +11,14 @@ const cors = require('cors'); // CORS 미들웨어 추가
 const multer = require('multer'); // multer 패키지 추가
 const jwt = require('jsonwebtoken'); // jwt 패키지 추가
 
+const mongoose = require('mongoose'); // mongoose 추가
+const bcrypt = require('bcryptjs'); // bcrypt 패키지 추가
+
+// MongoDB 연결 설정
+mongoose.connect('mongodb://localhost:27017/myapp')
+  .then(() => console.log('MongoDB connected...'))
+  .catch(err => console.log(err));
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -30,10 +38,40 @@ app.use(bodyParser.json()); // JSON 형식의 요청 본문을 파싱하도록 b
 app.use(cors()); // CORS 미들웨어 사용
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // 업로드된 파일을 제공하기 위한 정적 경로 추가
 
-// 파일 경로 설정
-const usersFile = path.join(__dirname, 'data', 'users.json');
-const postsFile = path.join(__dirname, 'data', 'posts.json');
-const commentsFile = path.join(__dirname, 'data', 'comments.json'); // comments.json 파일의 경로를 설정합니다.
+
+/* 몽고db 관련 */
+// Mongoose 스키마 및 모델 설정
+const UserSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
+}, { timestamps: true });
+
+const PostSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  content: { type: String, required: true },
+  category: { type: String, required: true },
+  likes: { type: Number, default: 0 },
+  file: { type: String },
+  username: { type: String, required: true },
+}, { timestamps: true });
+
+const CommentSchema = new mongoose.Schema({
+  postId: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },
+  content: { type: String, required: true },
+  username: { type: String, required: true },
+}, { timestamps: true });
+
+const User = mongoose.model('User', UserSchema);
+const Post = mongoose.model('Post', PostSchema);
+const Comment = mongoose.model('Comment', CommentSchema);
+
+
+// // 파일 경로 설정
+// const usersFile = path.join(__dirname, 'data', 'users.json');
+// const postsFile =
+
+// path.join(__dirname, 'data', 'posts.json');
+// const commentsFile = path.join(__dirname, 'data', 'comments.json'); // comments.json 파일의 경로를 설정합니다.
 
 // 업로드 디렉토리 설정 및 multer 미들웨어 설정
 const storage = multer.diskStorage({
@@ -63,20 +101,20 @@ const upload = multer({
 }); // 파일 업로드를 위한 디렉토리 설정 및 파일 필터 추가
 
 
-// 댓글 데이터를 읽고 쓰는 함수
-const readData = (filePath) => {
-  try {
-    return JSON.parse(fs.readFileSync(filePath)); // 파일을 읽고 JSON 형식으로 파싱합니다.
+// // 댓글 데이터를 읽고 쓰는 함수
+// const readData = (filePath) => {
+//   try {
+//     return JSON.parse(fs.readFileSync(filePath)); // 파일을 읽고 JSON 형식으로 파싱합니다.
 
-  } catch (error) {
-    return []; // 오류가 발생하면 빈 배열을 반환합니다.
-  }
-};
+//   } catch (error) {
+//     return []; // 오류가 발생하면 빈 배열을 반환합니다.
+//   }
+// };
 
-// 데이터를 파일에 쓰는 유틸리티 함수
-const writeData = (filePath, data) => {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-};
+// // 데이터를 파일에 쓰는 유틸리티 함수
+// const writeData = (filePath, data) => {
+//   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+// };
 
 // JWT 토큰을 확인하는 미들웨어
 const authenticateToken = (req, res, next) => {
@@ -92,205 +130,224 @@ const authenticateToken = (req, res, next) => {
 };
 
 // 프로필 조회
-app.get('/profile', authenticateToken, (req, res) => {
-  const users = readData(usersFile);
-  const user = users.find(u => u.username === req.user.username);
+app.get('/profile', authenticateToken, async (req, res) => {
+  try {
 
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+    const user = await User.findOne({ username: req.user.username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const posts = await Post.find({ username: user.username });
+    res.status(200).json({ user, posts });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
-
-  const posts = readData(postsFile).filter(post => post.username === user.username);
-  res.status(200).json({ user, posts });
 });
 
 
-
+const SALT_ROUNDS = 10;
 // 인증 관련 라우트
 // 회원가입 라우트
-app.post('/register', (req, res) => {
-  const users = readData(usersFile); // 기존 사용자 데이터를 읽기.
-  const { username, password } = req.body; // 요청 본문에서 username과 password를 가져오기..
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
-  if (users.find(user => user.username === username)) { // 동일한 username이 존재하는지 확인..
-    return res.status(400).json({ message: 'User already exists' }); // 이미 존재하면 에러 메시지를 반환.
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS); // 비밀번호 해시화
+    const newUser = new User({ username, password: hashedPassword });
+    await newUser.save();
+
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
-
-  users.push({ username, password }); // 새로운 사용자를 추가.
-  writeData(usersFile, users); // 사용자 데이터를 파일에 쓰기.
-  res.status(201).json({ message: 'User registered successfully' }); // 성공 메시지를 반환.
 });
 
 // 로그인 라우트
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username});
 
-    const users = readData(usersFile); // 기존 사용자 데이터를 읽기.
-    const { username, password } = req.body; // 요청 본문에서 username과 password를 가져오기.
-  
-    const user = users.find(user => user.username === username && user.password === password); // 해당 사용자 정보를 찾기.
-    
-    if (user) {
-      const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '1h' });
-      res.status(200).json({ message: 'Login successful', token });
-    } else {
-      res.status(400).json({ message: 'Invalid username or password' }); // 존재하지 않으면 에러 메시지를 반환.
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid username or password' });
     }
-  });
+
+    const isMatch = await bcrypt.compare(password, user.password); // 비밀번호 비교
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid username or password' });
+    }
+
+    const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+    res.status(200).json({ message: 'Login successful', token });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
   
 
 // 모든 게시물 조회 (Read All) - 카테고리별로 그룹화
-app.get('/posts', (req, res) => {
+app.get('/posts', async (req, res) => {
+  const { sortBy, category, search, page = 1, limit = 10 } = req.query;
 
-  const posts = readData(postsFile);
-  const { sortBy, category, search, page = 1, limit = 10  } = req.query;
+  try {
+    let query = {};
+    if (category) {
+      query.category = category;
+    }
+    if (search) {
+      query.$or = [
+        { title: new RegExp(search, 'i') },
+        { username: new RegExp(search, 'i') }
+      ];
+    }
 
-  // 카테고리 필터링
-  let filteredPosts = category ? posts.filter(post => post.category === category) : posts;
+    const totalPosts = await Post.countDocuments(query); // 총 게시물 수
+    let posts = await Post.find(query)
+      .sort(sortBy === 'likes' ? { likes: -1 } : { createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
 
-  // 검색 필터링
-  if (search) {
-    filteredPosts = filteredPosts.filter(post =>
-      (post.title && post.title.toLowerCase().includes(search.toLowerCase())) ||
-      (post.username && post.username.toLowerCase().includes(search.toLowerCase()))
-    );
-  }
-
-
-  // 정렬
-  if (sortBy === 'likes') {
-    filteredPosts.sort((a, b) => b.likes - a.likes);
-  } else if (sortBy === 'comments') {
-    const comments = readData(commentsFile);
-
-    filteredPosts.sort((a, b) => {
-
-      const aComments = comments.filter(comment => comment.postId === a.id).length;
-      const bComments = comments.filter(comment => comment.postId === b.id).length;
-      
-      return bComments - aComments;
+    res.status(200).json({
+      totalPages: Math.ceil(totalPosts / limit),
+      currentPage: page,
+      posts
     });
-  } else {
-    // 기본적으로 최신순 정렬
-    filteredPosts.sort((a, b) => b.id - a.id);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
-
-  // 페이지네이션
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
-  const paginatedPosts = filteredPosts.slice(startIndex, endIndex);
-
-  res.status(200).json({
-    totalPages: Math.ceil(filteredPosts.length / limit),
-    currentPage: page,
-    posts: paginatedPosts,
-  });
-  
 });
 
 // 게시물 생성 (Create)
-app.post('/posts', authenticateToken,  upload.single('file'), (req, res) => {
-  const posts = readData(postsFile); // 기존 게시글 데이터를 읽어옵니다.
-  
-  const newPost = { 
-    id: Date.now(), 
-    title: req.body.title,
-    content: req.body.content,
-    category: req.body.category,
-    likes: 0, // 좋아요 수를 초기화합니다.
-    file: req.file ? req.file.filename : null, // 업로드된 파일의 이름을 저장합니다.
-    username: req.body.username // 사용자 이름을 게시글에 추가합니다.
-  }; // 새로운 게시글을 생성.
-  
-  posts.push(newPost);  // 새로운 게시글을 배열에 추가.
-  writeData(postsFile, posts); // 게시글 데이터를 파일에 씁니다.
-  res.status(201).json(newPost); // 새 게시글 데이터를 반환.
+app.post('/posts', authenticateToken, upload.single('file'), async (req, res) => {
+  const { title, content, category, username } = req.body;
+  try {
+    const newPost = new Post({
+      title,
+      content,
+      category,
+      likes: 0,
+      username,
+      file: req.file ? req.file.filename : null
+    });
+
+    await newPost.save();
+    res.status(201).json(newPost);
+
+  } catch (err) {
+    res.status(500).json({ message: 'Error creating post' });
+  }
 });
 
 
 // 특정 게시물 조회 (Read One)
-app.get('/posts/:id', (req, res) => {
-  const posts = readData(postsFile); // 기존 게시글 데이터를 읽기.
-  const post = posts.find(p => p.id === parseInt(req.params.id));
-  
-  if (post) {
-    res.status(200).json(post); // 게시글이 존재하면 반환.
-  } else {
-    res.status(404).json({ message: 'Post not found' }); // 게시글이 없으면 에러 메시지를 반환.
+app.get('/posts/:id', async (req, res) => {
+
+  try {
+    console.log(`Fetching post with id: ${req.params.id}`);
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    res.status(200).json(post);
+  } catch (err) {
+    console.error(`Error fetching post: ${err.message}`);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
+
 // 게시물 수정 (Update)
-app.put('/posts/:id', upload.single('file'),  (req, res) => {
-  const posts = readData(postsFile);
-  const index = posts.findIndex(p => p.id === parseInt(req.params.id));
-  
-  if (index !== -1) {
-    const updatedPost = { ...posts[index], ...req.body };
-    
-    if (req.file) {
-      updatedPost.file  = req.file.filename;
+app.put('/posts/:id', upload.single('file'), async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (post) {
+      post.title = req.body.title || post.title;
+      post.content = req.body.content || post.content;
+      post.category = req.body.category || post.category;
+
+      if (req.file) post.file = req.file.filename;
+
+      await post.save();
+      res.status(200).json(post);
+
+    } else {
+      res.status(404).json({ message: 'Post not found' });
     }
-
-    posts[index] = updatedPost; // 업데이트된 게시물을 배열에 반영합니다.
-    writeData(postsFile, posts);
-
-    res.status(200).json(posts[index]);
-  } else {
-    res.status(404).json({ message: 'Post not found' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating post' });
   }
 });
 
 // 게시물 삭제 (Delete)
-app.delete('/posts/:id', (req, res) => {
-  const posts = readData(postsFile);
-  const filteredPosts = posts.filter(p => p.id !== parseInt(req.params.id));
-  
-  if (posts.length !== filteredPosts.length) {
-    writeData(postsFile, filteredPosts);
-    res.status(204).send();
-
-  } else {
-    res.status(404).json({ message: 'Post not found' });
+app.delete('/posts/:id', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (post) {
+      await Post.deleteOne({ _id: req.params.id });
+      
+      res.status(204).send();
+    } else {
+      res.status(404).json({ message: 'Post not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting post' });
   }
 });
 
 // 좋아요 업데이트 라우트
-app.post('/posts/:id/like', (req, res) => {
-  const posts = readData(postsFile);
-  const index = posts.findIndex(p => p.id === parseInt(req.params.id));
-  if (index !== -1) {
-
-    posts[index].likes = (posts[index].likes || 0) + 1;
-    writeData(postsFile, posts);
-
-    res.status(200).json(posts[index]);
-
-  } else {
-    res.status(404).json({ message: 'Post not found' });
+app.post('/posts/:id/like', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (post) {
+      post.likes += 1;
+      await post.save();
+      res.status(200).json(post);
+    } else {
+      res.status(404).json({ message: 'Post not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error liking post' });
   }
 });
 
 
 /* 댓글 관련 */
 // 댓글 생성 (Create)
-app.post('/posts/:id/comments', (req, res) => {
-  const comments = readData(commentsFile);
-  const { content } = req.body; // content 변수를 요청 본문에서 가져오기
-  const newComment = { id: Date.now(), postId: parseInt(req.params.id), content };
-  
-  comments.push(newComment);
-  writeData(commentsFile, comments);
-  
-  res.status(201).json(newComment);
+app.post('/posts/:id/comments', authenticateToken, async (req, res) => {
+  const { content } = req.body;
+  try {
+    const newComment = new Comment({
+      postId: req.params.id,
+      content,
+      username: req.user.username
+    });
+
+    await newComment.save();
+    res.status(201).json(newComment);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // 특정 게시물의 댓글 조회 (Read)
-app.get('/posts/:id/comments', (req, res) => {
-  
-  const comments = readData(commentsFile);
-  const postComments = comments.filter(comment => comment.postId === parseInt(req.params.id));
-  
-  res.status(200).json(postComments);
+app.get('/posts/:id/comments', async (req, res) => {
+
+  try {
+    console.log(`Fetching comments for post with id: ${req.params.id}`);
+    const comments = await Comment.find({ postId: req.params.id });
+    res.status(200).json(comments);
+    
+  } catch (err) {
+    console.error(`Error fetching comments: ${err.message}`);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 
@@ -302,7 +359,6 @@ const rooms = new Map();
 // 채팅 설정(여러 방 지원 추가)
 io.on('connection', (socket) => {
   console.log('a user connected');
-
 
   // 클라이언트에 방 목록을 전송하는 함수
   const updateRoomList = () => {
