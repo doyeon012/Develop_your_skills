@@ -5,6 +5,7 @@ import Register from './components/Register';
 import PostList from './components/PostList';
 import PostForm from './components/PostForm';
 import PostDetail from './components/PostDetail';
+import Profile from './components/Profile';
 import Chat from './components/Chat'; // Chat 컴포넌트 추가
 import './App.css';
 
@@ -56,6 +57,7 @@ function App() {
             </>
           ) : (
             <>
+            <Link to="/profile">Profile</Link> {/* 프로필 링크 추가 */}
               <button onClick={handleLogout}>Logout</button>
             </>
           )}
@@ -66,6 +68,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/create" element={<PostForm/>} />
           <Route path="/posts/:id" element={<PostDetail />} />
+          <Route path="/profile" element={<Profile username={username} />} /> {/* 프로필 페이지 라우트 추가 */}
+
           <Route path="/chat" element={<Chat username={username} />} /> {/* Chat 라우트에 username 전달 */}
         </Routes>
       </div>

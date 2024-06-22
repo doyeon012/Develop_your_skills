@@ -91,7 +91,18 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// 프로필 조회
+app.get('/profile', authenticateToken, (req, res) => {
+  const users = readData(usersFile);
+  const user = users.find(u => u.username === req.user.username);
 
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const posts = readData(postsFile).filter(post => post.username === user.username);
+  res.status(200).json({ user, posts });
+});
 
 
 
