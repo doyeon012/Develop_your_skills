@@ -65,14 +65,6 @@ const User = mongoose.model('User', UserSchema);
 const Post = mongoose.model('Post', PostSchema);
 const Comment = mongoose.model('Comment', CommentSchema);
 
-
-// // 파일 경로 설정
-// const usersFile = path.join(__dirname, 'data', 'users.json');
-// const postsFile =
-
-// path.join(__dirname, 'data', 'posts.json');
-// const commentsFile = path.join(__dirname, 'data', 'comments.json'); // comments.json 파일의 경로를 설정합니다.
-
 // 업로드 디렉토리 설정 및 multer 미들웨어 설정
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -100,21 +92,6 @@ const upload = multer({
   fileFilter: fileFilter
 }); // 파일 업로드를 위한 디렉토리 설정 및 파일 필터 추가
 
-
-// // 댓글 데이터를 읽고 쓰는 함수
-// const readData = (filePath) => {
-//   try {
-//     return JSON.parse(fs.readFileSync(filePath)); // 파일을 읽고 JSON 형식으로 파싱합니다.
-
-//   } catch (error) {
-//     return []; // 오류가 발생하면 빈 배열을 반환합니다.
-//   }
-// };
-
-// // 데이터를 파일에 쓰는 유틸리티 함수
-// const writeData = (filePath, data) => {
-//   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-// };
 
 // JWT 토큰을 확인하는 미들웨어
 const authenticateToken = (req, res, next) => {
@@ -264,9 +241,14 @@ app.get('/posts/:id', async (req, res) => {
 
 
 // 게시물 수정 (Update)
-app.put('/posts/:id', upload.single('file'), async (req, res) => {
+app.put('/posts/:id',authenticateToken,  upload.single('file'), async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
+
+    if (post.username !== req.user.username) {
+      return res.status(403).json({ message: 'You are not authorized to update this post' });
+    }
+
     if (post) {
       post.title = req.body.title || post.title;
       post.content = req.body.content || post.content;
@@ -286,12 +268,17 @@ app.put('/posts/:id', upload.single('file'), async (req, res) => {
 });
 
 // 게시물 삭제 (Delete)
-app.delete('/posts/:id', async (req, res) => {
+app.delete('/posts/:id', authenticateToken,  async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (post) {
+
+      if (post.username !== req.user.username) {
+        return res.status(403).json({ message: 'You are not authorized to delete this post' });
+      }
+
       await Post.deleteOne({ _id: req.params.id });
-      
+
       res.status(204).send();
     } else {
       res.status(404).json({ message: 'Post not found' });

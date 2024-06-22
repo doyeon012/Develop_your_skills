@@ -17,6 +17,7 @@ const PostDetail = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
 
+  const username = sessionStorage.getItem('username'); // 현재 로그인한 사용자 이름을 가져옵니다.
 
    // 컴포넌트가 마운트될 때 게시물 및 댓글 데이터를 가져오는 함수
   useEffect(() => { 
@@ -80,8 +81,18 @@ const PostDetail = () => {
   const handleEditSubmit = async (e) => {
 
     e.preventDefault();
+
+    if (post.username !== username) {
+      alert('You are not authorized to edit this post');
+      return;
+    }
+
     try {
-      const response = await axios.put(`http://localhost:3001/posts/${id}`, { title: editTitle, content: editContent });
+      const response = await axios.put(`http://localhost:3001/posts/${id}`, { title: editTitle, content: editContent }, {
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
       
       if (response.status === 200) {
         setPost(response.data); // 수정된 게시물 데이터 설정
@@ -98,8 +109,18 @@ const PostDetail = () => {
   // 게시물을 삭제하는 함수
   const handleDeletePost  = async () => {
 
+
+    if (post.username !== username) {
+      alert('You are not authorized to delete this post');
+      return;
+    }
+
     try {
-      const response = await axios.delete(`http://localhost:3001/posts/${id}`);
+      const response = await axios.delete(`http://localhost:3001/posts/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
       
       if (response.status === 204) {
         navigate('/'); // 게시물 삭제 후 홈 페이지로 이동
@@ -149,14 +170,17 @@ const PostDetail = () => {
             <h2>{post.title}</h2>
             <p>{post.content}</p>
             <p>by {post.username}</p>
-            <div className="post-buttons">
-              <button onClick={() => setIsEditing(true)}>Edit</button>
-              <button onClick={handleDeletePost}>Delete</button>
-            </div>
+            {post.username === username && (
+              <div className="post-buttons">
+                <button onClick={() => setIsEditing(true)}>Edit</button>
+                <button onClick={handleDeletePost}>Delete</button>
+              </div>
+            )}
           </>
         )}
       </div>
       <hr />
+
       <div className="comments-section">
         <h3>Comments</h3>
         <ul className="comments-list">

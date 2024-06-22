@@ -9,6 +9,12 @@ const Profile = ({ username }) => {
     const fetchPosts = async () => {
       try {
         const token = sessionStorage.getItem('token');
+
+        if (!token) {
+          console.error('No token found, user not authenticated');
+          return;
+        }
+        
         const response = await axios.get('http://localhost:3001/profile', {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -32,7 +38,7 @@ const Profile = ({ username }) => {
       <h2>Posts</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {posts.map(post => (
-          <div key={post.id} style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>
+          <div key={post._id} style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>
             <h3>{post.title}</h3>
             <p>{post.content}</p>
             <p><strong>Category:</strong> {post.category}</p>
