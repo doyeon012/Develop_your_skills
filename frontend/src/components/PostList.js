@@ -130,6 +130,11 @@ const PostList = () => {
     sessionStorage.setItem('page', page);
   };
 
+  // 사용자 이름에서 '@' 앞부분만 추출하는 함수
+  const displayUsername = (username) => {
+    return username.split('@')[0];
+  };
+
  // 카테고리별로 그룹화된 게시물을 생성
   const groupedPosts = posts && Array.isArray(posts) ? posts.reduce((acc, post) => {
     if (!acc[post.category]) {
@@ -177,7 +182,7 @@ const PostList = () => {
             {groupedPosts[category].map(post => (
               <li key={post._id} className="post-item">
                 <Link to={`/posts/${post._id}`} state={{ sortBy, category }}>{post.title}</Link>
-                <p>by {post.username}</p>
+                <p>by {displayUsername(post.username)}</p>
                 {post.file && <img src={`http://localhost:3001/uploads/${post.file}`} alt={post.title} />}
                 <p>Likes: {post.likes}</p>
                 <button onClick={() => handleLike(post._id)}>Like</button>

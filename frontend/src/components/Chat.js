@@ -89,6 +89,10 @@ const Chat = ({ username }) => {
     }
   };
 
+  const displayUsername = (username) => {
+    return username.split('@')[0];
+  };
+
   return (
     <div className="chat-container">
       <h2>Chat</h2>
@@ -138,7 +142,7 @@ const Chat = ({ username }) => {
           </div>
 
           <div className="room-leader">
-            <strong>Leader:</strong> {leader === socket.id ? "You" : leader}
+            <strong>Leader:</strong> {leader === socket.id ? "You" : displayUsername(leader)}
           </div>
 
           <button onClick={leaveRoom}>Leave Room</button>
@@ -150,7 +154,7 @@ const Chat = ({ username }) => {
       <div className="messages">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.username === username ? 'my-message' : 'other-message'}`}>
-            <span className="message-username">{msg.username}: </span>
+            <span className="message-username">{displayUsername(msg.username)}: </span>
             <span className="message-text">{msg.text}</span>
           </div>
         ))}

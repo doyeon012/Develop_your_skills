@@ -17,7 +17,9 @@ const PostDetail = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
 
-  const username = sessionStorage.getItem('username'); // 현재 로그인한 사용자 이름을 가져옵니다.
+  const storedUsername = sessionStorage.getItem('username');
+  const username = storedUsername ? storedUsername.toLowerCase() : '';
+
 
    // 컴포넌트가 마운트될 때 게시물 및 댓글 데이터를 가져오는 함수
   useEffect(() => { 
@@ -79,20 +81,21 @@ const PostDetail = () => {
   
   // 게시물을 수정하는 함수
   const handleEditSubmit = async (e) => {
-
     e.preventDefault();
 
-    if (post.username !== username) {
+    const token = sessionStorage.getItem('token');
+
+    if (post.username.toLowerCase() !== username) {
       alert('You are not authorized to edit this post');
       return;
     }
 
-    try {
-      const response = await axios.put(`http://localhost:3001/posts/${id}`, { title: editTitle, content: editContent }, {
-        headers: {
-          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-        }
-      });
+  try {
+    const response = await axios.put(`http://localhost:3001/posts/${id}`, { title: editTitle, content: editContent }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
       
       if (response.status === 200) {
         setPost(response.data); // 수정된 게시물 데이터 설정
@@ -108,9 +111,9 @@ const PostDetail = () => {
 
   // 게시물을 삭제하는 함수
   const handleDeletePost  = async () => {
+    const token = sessionStorage.getItem('token');
 
-
-    if (post.username !== username) {
+    if (post.username.toLowerCase() !== username) {
       alert('You are not authorized to delete this post');
       return;
     }
@@ -118,7 +121,7 @@ const PostDetail = () => {
     try {
       const response = await axios.delete(`http://localhost:3001/posts/${id}`, {
         headers: {
-          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -142,6 +145,11 @@ const PostDetail = () => {
     const category = sessionStorage.getItem('category') || '';
     navigate(`/?sortBy=${sortBy}&category=${category}`, { replace: true }); // 상태 전달
     window.location.reload(); // 페이지를 새로고침하여 정렬 옵션과 필터를 유지
+  };
+
+  // 사용자 이름에서 '@' 앞부분만 추출하는 함수
+  const displayUsername = (username) => {
+    return username.split('@')[0];
   };
 
   return (
@@ -169,8 +177,8 @@ const PostDetail = () => {
           <>
             <h2>{post.title}</h2>
             <p>{post.content}</p>
-            <p>by {post.username}</p>
-            {post.username === username && (
+            <p>by {displayUsername(post.username)}</p>
+            {post.username.toLowerCase() === username && (
               <div className="post-buttons">
                 <button onClick={() => setIsEditing(true)}>Edit</button>
                 <button onClick={handleDeletePost}>Delete</button>
@@ -202,6 +210,5 @@ const PostDetail = () => {
     </div>
   );
 };
-
 
 export default PostDetail;

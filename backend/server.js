@@ -129,14 +129,17 @@ const SALT_ROUNDS = 10;
 // 회원가입 라우트
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
+
   try {
-    const existingUser = await User.findOne({ username });
+    const lowerCaseUsername = username.toLowerCase(); // 사용자 이름을 소문자로 변환
+    const existingUser = await User.findOne({ username: lowerCaseUsername });
+    
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS); // 비밀번호 해시화
-    const newUser = new User({ username, password: hashedPassword });
+    const newUser = new User({ username: username.toLowerCase(), password: hashedPassword });
     await newUser.save();
 
     res.status(201).json({ message: 'User registered successfully' });
@@ -149,7 +152,8 @@ app.post('/register', async (req, res) => {
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const user = await User.findOne({ username});
+    const lowerCaseUsername = username.toLowerCase(); // 사용자 이름을 소문자로 변환
+    const user = await User.findOne({ username: lowerCaseUsername });
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid username or password' });
@@ -160,7 +164,7 @@ app.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid username or password' });
     }
 
-    const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign({ username: lowerCaseUsername }, SECRET_KEY, { expiresIn: '1h' });
     res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -202,14 +206,14 @@ app.get('/posts', async (req, res) => {
 
 // 게시물 생성 (Create)
 app.post('/posts', authenticateToken, upload.single('file'), async (req, res) => {
-  const { title, content, category, username } = req.body;
+  const { title, content, category } = req.body;
   try {
     const newPost = new Post({
       title,
       content,
       category,
       likes: 0,
-      username,
+      username: req.user.username.toLowerCase(), // 사용자 이름을 소문자로 저장
       file: req.file ? req.file.filename : null
     });
 
@@ -241,48 +245,49 @@ app.get('/posts/:id', async (req, res) => {
 
 
 // 게시물 수정 (Update)
-app.put('/posts/:id',authenticateToken,  upload.single('file'), async (req, res) => {
+app.put('/posts/:id', authenticateToken, upload.single('file'), async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
-    if (post.username !== req.user.username) {
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (post.username.toLowerCase() !== req.user.username.toLowerCase()) {
+      console.log(`Authorization failed: Post username: ${post.username}, Request username: ${req.user.username}`);
       return res.status(403).json({ message: 'You are not authorized to update this post' });
     }
 
-    if (post) {
-      post.title = req.body.title || post.title;
-      post.content = req.body.content || post.content;
-      post.category = req.body.category || post.category;
+    post.title = req.body.title || post.title;
+    post.content = req.body.content || post.content;
+    post.category = req.body.category || post.category;
 
-      if (req.file) post.file = req.file.filename;
+    if (req.file) post.file = req.file.filename;
 
-      await post.save();
-      res.status(200).json(post);
-
-    } else {
-      res.status(404).json({ message: 'Post not found' });
-    }
+    await post.save();
+    res.status(200).json(post);
   } catch (error) {
     res.status(500).json({ message: 'Error updating post' });
   }
 });
 
+
 // 게시물 삭제 (Delete)
-app.delete('/posts/:id', authenticateToken,  async (req, res) => {
+app.delete('/posts/:id', authenticateToken, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    if (post) {
 
-      if (post.username !== req.user.username) {
-        return res.status(403).json({ message: 'You are not authorized to delete this post' });
-      }
-
-      await Post.deleteOne({ _id: req.params.id });
-
-      res.status(204).send();
-    } else {
-      res.status(404).json({ message: 'Post not found' });
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
     }
+
+    if (post.username.toLowerCase() !== req.user.username.toLowerCase()) {
+      console.log(`Authorization failed: Post username: ${post.username}, Request username: ${req.user.username}`);
+      return res.status(403).json({ message: 'You are not authorized to delete this post' });
+    }
+
+    await Post.deleteOne({ _id: req.params.id });
+    res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: 'Error deleting post' });
   }
@@ -445,3 +450,4 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+

@@ -15,18 +15,19 @@ const Login = ({ setIsAuthenticated, setUsername: setGlobalUsername }) => { // s
     e.preventDefault(); // 폼의 기본 제출 동작 방지
 
     try {
-      const response = await axios.post('http://localhost:3001/login', { username, password });
+    const lowerCaseUsername = username.toLowerCase(); // 사용자 이름을 소문자로 변환
+    const response = await axios.post('http://localhost:3001/login', { username: lowerCaseUsername, password });
       
       if (response.status === 200) {
 
         setIsAuthenticated(true); // 인증 상태 업데이트
         const token = response.data.token;
-        const displayName = username.split('@')[0]; // '@' 전까지의 부분만 저장
+        // const displayName = lowerCaseUsername.split('@')[0]; // '@' 전까지의 부분만 저장
         sessionStorage.setItem('isAuthenticated', 'true'); // 로컬 스토리지에 인증 상태 저장
         sessionStorage.setItem('token', token); // 토큰 저장
-        sessionStorage.setItem('username', displayName); // 사용자 이름을 로컬 스토리지에 저장
+        sessionStorage.setItem('username', lowerCaseUsername); // 사용자 이름을 로컬 스토리지에 저장
         
-        setGlobalUsername(displayName); // 상위 컴포넌트의 상태 업데이트
+        setGlobalUsername(lowerCaseUsername); // 상위 컴포넌트의 상태 업데이트
 
         alert(response.data.message); // 로그인 성공 메시지 표시
         navigate('/'); // 로그인 성공 후 홈 화면으로 이동
