@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback  } from 'react';
 import io from 'socket.io-client';
+import { useNavigate  } from 'react-router-dom'; // react-router-dom 사용
 import '../Chat.css';
 
 const socket = io('http://localhost:3001'); // 서버 주소로 소켓 연결
 
-const Chat = ({ username }) => {
+const Chat = ({ username, token}) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [room, setRoom] = useState(''); // 방 상태 변수 추가
@@ -12,17 +13,28 @@ const Chat = ({ username }) => {
   const [rooms, setRooms] = useState([]);
   const [newRoom, setNewRoom] = useState(''); // 새로운 방 이름 상태 변수 추가
   const [leader, setLeader] = useState(''); // 방장 상태 변수 추가
+
   const [recording, setRecording] = useState(false);
   const [recordedChunks, setRecordedChunks] = useState([]);
+  
   const messagesEndRef = useRef(null);
+
+  const navigate  = useNavigate(); // useHistory 훅 사용
+
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localStream = useRef(null);
   const peerConnection = useRef(null);
+
   const mediaRecorder = useRef(null); // 미디어 레코더
 
   useEffect(() => {
+
+    if (!token) {
+      navigate('/login'); // 토큰이 없으면 로그인 페이지로 리다이렉트
+    }
+
     socket.on('chat message', (msg) => {
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
