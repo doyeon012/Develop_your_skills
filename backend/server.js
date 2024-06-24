@@ -440,6 +440,20 @@ io.on('connection', (socket) => {
     io.to(msg.room).emit('chat message', msg);
   });
 
+  // WebRTC 신호 교환 처리
+  socket.on('offer', (data) => {
+    socket.to(data.room).emit('offer', { offer: data.offer, room: data.room });
+  });
+
+  socket.on('answer', (data) => {
+    socket.to(data.room).emit('answer', { answer: data.answer, room: data.room });
+  });
+
+  socket.on('ice-candidate', (data) => {
+    socket.to(data.room).emit('ice-candidate', { candidate: data.candidate, room: data.room });
+  });
+
+
   // 클라이언트 연결 시 초기 방 목록 전송
   updateRoomList();
 
