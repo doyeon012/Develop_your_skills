@@ -22,18 +22,7 @@ const PostDetail = () => {
 
    // 컴포넌트가 마운트될 때 게시물 및 댓글 데이터를 가져오는 함수
   useEffect(() => { 
-    
-    const checkLogin = () => {
-      const token = sessionStorage.getItem('token');
-      if (!token) {
-        alert('로그인 하세요');
-        navigate('/login');
-        return false;
-      }
-      return true;
-    };
 
-    if (!checkLogin()) return;
     console.log('Fetching post with id:', id);
 
 
@@ -65,7 +54,7 @@ const PostDetail = () => {
 
     fetchPost(); // 게시물 데이터 가져오기
     fetchComments(); // 댓글 데이터 가져오기
-  }, [id, navigate]); // id가 변경될 때마다 실행
+  }, [id]); // id가 변경될 때마다 실행
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
