@@ -12,13 +12,15 @@ const Chat = ({ username }) => {
   const [rooms, setRooms] = useState([]);
   const [newRoom, setNewRoom] = useState(''); // 새로운 방 이름 상태 변수 추가
   const [leader, setLeader] = useState(''); // 방장 상태 변수 추가
+  const [recording, setRecording] = useState(false);
+  const [recordedChunks, setRecordedChunks] = useState([]);
   const messagesEndRef = useRef(null);
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localStream = useRef(null);
   const peerConnection = useRef(null);
-
+  const mediaRecorder = useRef(null); // 미디어 레코더
 
   useEffect(() => {
     socket.on('chat message', (msg) => {
@@ -172,7 +174,7 @@ const Chat = ({ username }) => {
     };
 
     if (localStream.current) {
-      localStream.current.getTracks().forEach(track => {
+      localStream.current.getTracks().forEach((track) => {
         peerConnection.current.addTrack(track, localStream.current);
       });
     }
@@ -185,6 +187,44 @@ const Chat = ({ username }) => {
       initializePeerConnection();
     }
   }, [inRoom, initializePeerConnection]);
+
+  const startRecording = () => {
+    if (localStream.current) {
+      mediaRecorder.current = new MediaRecorder(localStream.current, {
+        mimeType: 'video/webm; codecs=vp9',
+      });
+      mediaRecorder.current.ondataavailable = handleDataAvailable;
+      mediaRecorder.current.start();
+      setRecording(true);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder.current) {
+      mediaRecorder.current.stop();
+      setRecording(false);
+    }
+  };
+
+  const handleDataAvailable = (event) => {
+    if (event.data.size > 0) {
+      setRecordedChunks((prev) => [...prev, event.data]);
+    }
+  };
+
+  const downloadRecording = () => {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'recording.webm';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+
 
   return (
     <div className="chat-container">
@@ -238,8 +278,19 @@ const Chat = ({ username }) => {
               <video ref={localVideoRef} autoPlay muted className="local-video" />
               <video ref={remoteVideoRef} autoPlay className="remote-video" />
             </div>
+            <div className="recording-controls">
+              {recording ? (
+                <button onClick={stopRecording}>Stop Recording</button>
+              ) : (
+                <button onClick={startRecording}>Start Recording</button>
+              )}
+              <button onClick={downloadRecording} disabled={recordedChunks.length === 0}>
+                Download Recording
+              </button>
+            </div>
           </>
         )}
+
         <div className="chat-area">
           <div className="messages">
             {messages.map((msg, index) => (

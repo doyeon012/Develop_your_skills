@@ -87,3 +87,10 @@
 .room-item button {
   margin-left: 1rem;
 }
+
+/* 추가된 녹화 컨트롤 CSS */
+.recording-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
