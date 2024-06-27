@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const Profile = ({ username }) => {
-  const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
@@ -21,7 +20,6 @@ const Profile = ({ username }) => {
           }
         });
 
-        setProfile(response.data.user);
         setPosts(response.data.posts);
 
       } catch (error) {

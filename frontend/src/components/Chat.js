@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useRef, useCallback  } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
+import { useNavigate } from 'react-router-dom';
 import '../Chat.css';
 
 const socket = io('http://localhost:3001'); // 서버 주소로 소켓 연결
 
-const Chat = ({ username}) => {
+const Chat = ({ username }) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [room, setRoom] = useState(''); // 방 상태 변수 추가
@@ -17,56 +18,57 @@ const Chat = ({ username}) => {
   const [recordedChunks, setRecordedChunks] = useState([]);
   
   const messagesEndRef = useRef(null);
-
-
+  const navigate = useNavigate(); // useNavigate 훅 사용
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localStream = useRef(null);
   const peerConnection = useRef(null);
-
   const mediaRecorder = useRef(null); // 미디어 레코더
 
   useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      alert('로그인 하세요');
+      navigate('/login');
+      return;
+    }
 
     socket.on('chat message', (msg) => {
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
 
     socket.on('room list', (rooms) => {
-        setRooms(rooms);    
-      });
-    
+      setRooms(rooms);    
+    });
+
     socket.on('update leader', ({ room: updatedRoom, leader }) => {
+      if (updatedRoom === room) {
+        setLeader(leader);
+      }
+    });
 
-        if (updatedRoom === room) {
-            setLeader(leader);
-        }
+    // WebRTC 신호 교환 처리
+    socket.on('offer', async (data) => {
+      if (peerConnection.current) {
+        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnection.current.createAnswer();
+        await peerConnection.current.setLocalDescription(answer);
+        socket.emit('answer', { answer, room: data.room });
+      }
+    });
 
-      });
+    socket.on('answer', async (data) => {
+      if (peerConnection.current) {
+        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+      }
+    });
 
-      // WebRTC 신호 교환 처리
-      socket.on('offer', async (data) => {
-        if (peerConnection.current) {
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.offer));
-
-          const answer = await peerConnection.current.createAnswer();
-          await peerConnection.current.setLocalDescription(answer);
-          socket.emit('answer', { answer, room: data.room });
-        }
-      });
-
-      socket.on('answer', async (data) => {
-        if (peerConnection.current) {
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.answer));
-        }
-      });
-
-      socket.on('ice-candidate', async (data) => {
-        if (peerConnection.current) {
-          await peerConnection.current.addIceCandidate(new RTCIceCandidate(data.candidate));
-        }
-      });
+    socket.on('ice-candidate', async (data) => {
+      if (peerConnection.current) {
+        await peerConnection.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+      }
+    });
 
     return () => {
       socket.off('chat message');
@@ -76,21 +78,22 @@ const Chat = ({ username}) => {
       socket.off('answer');
       socket.off('ice-candidate');
     };
-  }, [room]);
+  }, [room, navigate]); // navigate 추가
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   const joinRoom = (e) => {
     e.preventDefault();
-
     if (room) {
       socket.emit('join room', { room, username });
       setInRoom(true); // 방에 성공적으로 조인했을 때 상태 변경
     }
   };
-  
+
   const joinSpecificRoom = (roomName) => {
     setRoom(roomName);
     socket.emit('join room', { room: roomName, username });
@@ -99,7 +102,6 @@ const Chat = ({ username}) => {
 
   const leaveRoom = (e) => {
     e.preventDefault();
-
     if (room) {
       socket.emit('leave room', room);
       setInRoom(false); // 방을 떠났을 때 상태 변경
@@ -117,7 +119,6 @@ const Chat = ({ username}) => {
 
   const sendMessage = (e) => {
     e.preventDefault();
-
     if (message.trim() !== '' && room) {
       const msg = { username, text: message, room };
       socket.emit('chat message', msg);
@@ -127,7 +128,6 @@ const Chat = ({ username}) => {
 
   const createRoom = (e) => {
     e.preventDefault();
-
     if (newRoom) {
       socket.emit('create room', { room: newRoom, username });
       joinSpecificRoom(newRoom); // 방을 생성한 후 자동으로 입장하도록 수정
@@ -139,13 +139,11 @@ const Chat = ({ username}) => {
     return username.split('@')[0];
   };
 
-
   /* 로컬 스트림을  시작하고 정지하는 함수들 */
   const startLocalStream = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStream.current = stream;
-
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
@@ -155,10 +153,8 @@ const Chat = ({ username}) => {
   };
 
   const stopLocalStream = () => {
-
     if (localStream.current) {
       localStream.current.getTracks().forEach(track => track.stop());
-
       localStream.current = null;
     }
   };
@@ -229,8 +225,6 @@ const Chat = ({ username}) => {
     a.click();
     window.URL.revokeObjectURL(url);
   };
-
-
 
   return (
     <div className="chat-container">
